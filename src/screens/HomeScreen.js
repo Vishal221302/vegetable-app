@@ -216,37 +216,45 @@ const HomeScreen = ({ navigation }) => {
     </View>
   );
 
-  const renderPopularProducts = () => (
-    <View style={styles.productSection}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Popular Products</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('ProductList')}>
-          <Text style={styles.seeAll}>See All</Text>
-        </TouchableOpacity>
+  const renderPopularProducts = () => {
+    const popularProducts = products.filter(p => p.isPopular === true);
+
+    if (!loading && popularProducts.length === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.productSection}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Popular Products</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('ProductList')}>
+            <Text style={styles.seeAll}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.productGrid}>
+          {loading ? (
+            [1, 2, 3, 4].map(i => (
+              <View key={i} style={styles.productGridItem}>
+                <ProductSkeleton />
+              </View>
+            ))
+          ) : (
+            popularProducts.map(product => (
+              <View key={product._id || product.id} style={styles.productGridItem}>
+                <ProductCard
+                  item={{...product, id: product._id || product.id, countInStock: product.countInStock}}
+                  onPress={() => navigation.navigate('ProductDetail', { product: {...product, id: product._id || product.id} })}
+                  onAdd={handleAddToCart}
+                  isFavorite={wishlistItems.some(fav => (fav._id || fav.id) === (product._id || product.id))}
+                  onFavoritePress={handleToggleWishlist}
+                />
+              </View>
+            ))
+          )}
+        </View>
       </View>
-      <View style={styles.productGrid}>
-        {loading ? (
-          [1, 2, 3, 4].map(i => (
-            <View key={i} style={styles.productGridItem}>
-              <ProductSkeleton />
-            </View>
-          ))
-        ) : (
-          products.slice(0, 6).map(product => (
-            <View key={product._id || product.id} style={styles.productGridItem}>
-              <ProductCard
-                item={{...product, id: product._id || product.id, countInStock: product.countInStock}}
-                onPress={() => navigation.navigate('ProductDetail', { product: {...product, id: product._id || product.id} })}
-                onAdd={handleAddToCart}
-                isFavorite={wishlistItems.some(fav => (fav._id || fav.id) === (product._id || product.id))}
-                onFavoritePress={handleToggleWishlist}
-              />
-            </View>
-          ))
-        )}
-      </View>
-    </View>
-  );
+    );
+  };
 
   const renderMidBanner = () => (
     <View style={styles.midBannerContainer}>

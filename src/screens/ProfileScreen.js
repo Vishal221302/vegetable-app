@@ -42,7 +42,7 @@ const ProfileScreen = ({ navigation }) => {
               source={{ uri: user?.profileImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }} 
               style={styles.profileImage} 
             />
-            <TouchableOpacity style={styles.editIcon}>
+            <TouchableOpacity style={styles.editIcon} onPress={() => navigation.navigate('EditProfile')}>
               <Ionicons name="camera" size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>

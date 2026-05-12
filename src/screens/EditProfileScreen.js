@@ -1,18 +1,33 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { theme } from '../utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateProfile } from '../store/slices/authSlice';
 
 const EditProfileScreen = ({ navigation }) => {
-  const [name, setName] = useState('Tariqul Islam');
-  const [email, setEmail] = useState('tariqul.islam@example.com');
-  const [phone, setPhone] = useState('+880 1234 567890');
-  const [address, setAddress] = useState('Dhaka, Bangladesh');
+  const dispatch = useDispatch();
+  const { user, loading } = useSelector(state => state.auth);
 
-  const handleSave = () => {
-    // Logic to save profile changes
-    navigation.goBack();
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [address, setAddress] = useState(user?.address || '');
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+
+    const result = await dispatch(updateProfile({
+      name,
+      email,
+      phone,
+      address
+    }));
+
+    if (updateProfile.fulfilled.match(result)) {
+      navigation.goBack();
+    }
   };
 
   return (
@@ -22,8 +37,12 @@ const EditProfileScreen = ({ navigation }) => {
           <Ionicons name="chevron-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
-        <TouchableOpacity onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Save</Text>
+        <TouchableOpacity onPress={handleSave} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+          ) : (
+            <Text style={styles.saveBtnText}>Save</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -31,7 +50,7 @@ const EditProfileScreen = ({ navigation }) => {
         <View style={styles.imageSection}>
           <View style={styles.imageWrapper}>
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&q=80' }} 
+              source={{ uri: user?.profileImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }} 
               style={styles.profileImage} 
             />
             <TouchableOpacity style={styles.cameraIcon}>
@@ -64,6 +83,7 @@ const EditProfileScreen = ({ navigation }) => {
                 onChangeText={setEmail}
                 placeholder="Enter your email"
                 keyboardType="email-address"
+                autoCapitalize="none"
               />
             </View>
           </View>
@@ -96,8 +116,16 @@ const EditProfileScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.updateBtn} onPress={handleSave}>
-          <Text style={styles.updateBtnText}>Update Profile</Text>
+        <TouchableOpacity 
+          style={[styles.updateBtn, loading && { opacity: 0.7 }]} 
+          onPress={handleSave}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.updateBtnText}>Update Profile</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
