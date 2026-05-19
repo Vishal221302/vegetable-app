@@ -41,77 +41,83 @@ const LoginScreen = ({ navigation }) => {
         <View style={styles.overlay} />
         <SafeAreaView style={styles.safeArea}>
           <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.keyboardView}
           >
-            <View style={styles.content}>
-              <View style={styles.header}>
-                <View style={styles.logoContainer}>
-                  <Ionicons name="leaf" size={40} color={theme.colors.surface} />
+            <ScrollView 
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.content}>
+                <View style={styles.header}>
+                  <View style={styles.logoContainer}>
+                    <Ionicons name="leaf" size={40} color={theme.colors.surface} />
+                  </View>
+                  <Text style={styles.title}>GreenFresh</Text>
+                  <Text style={styles.subtitle}>Organic Vegetables Delivered to Your Door</Text>
                 </View>
-                <Text style={styles.title}>GreenFresh</Text>
-                <Text style={styles.subtitle}>Organic Vegetables Delivered to Your Door</Text>
+
+                <View style={styles.formCard}>
+                  <Text style={styles.formTitle}>Welcome Back</Text>
+                  <Input 
+                    label="Email or Phone"
+                    icon="person-outline"
+                    placeholder="Enter email or phone"
+                    value={phone}
+                    onChangeText={setPhone}
+                  />
+
+                  <Input 
+                    label="Password"
+                    icon="lock-closed-outline"
+                    placeholder="Enter password"
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                  />
+
+                  <TouchableOpacity 
+                    style={styles.forgotPassword}
+                    onPress={() => navigation.navigate('ForgotPassword')}
+                  >
+                    <Text style={styles.forgotText}>Forgot Password?</Text>
+                  </TouchableOpacity>
+
+                  <Button 
+                    title={loading ? "Logging in..." : "Login"} 
+                    onPress={handleLogin} 
+                    style={styles.loginButton}
+                    disabled={loading}
+                  />
+
+                  <View style={styles.dividerContainer}>
+                    <View style={styles.divider} />
+                    <Text style={styles.dividerText}>OR LOGIN WITH</Text>
+                    <View style={styles.divider} />
+                  </View>
+
+                  <View style={styles.socialContainer}>
+                    <TouchableOpacity style={[styles.socialButton, styles.googleButton]}>
+                      <Ionicons name="logo-google" size={24} color="#DB4437" />
+                      <Text style={styles.socialButtonText}>Google</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity style={[styles.socialButton, styles.facebookButton]}>
+                      <Ionicons name="logo-facebook" size={24} color="#4267B2" />
+                      <Text style={styles.socialButtonText}>Facebook</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.footer}>
+                    <Text style={styles.footerText}>Don't have an account? </Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                      <Text style={styles.signupText}>Sign Up</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
-
-              <View style={styles.formCard}>
-                <Text style={styles.formTitle}>Welcome Back</Text>
-                <Input 
-                  label="Email or Phone"
-                  icon="person-outline"
-                  placeholder="Enter email or phone"
-                  value={phone}
-                  onChangeText={setPhone}
-                />
-
-                <Input 
-                  label="Password"
-                  icon="lock-closed-outline"
-                  placeholder="Enter password"
-                  secureTextEntry
-                  value={password}
-                  onChangeText={setPassword}
-                />
-
-                <TouchableOpacity 
-                  style={styles.forgotPassword}
-                  onPress={() => navigation.navigate('ForgotPassword')}
-                >
-                  <Text style={styles.forgotText}>Forgot Password?</Text>
-                </TouchableOpacity>
-
-                <Button 
-                  title={loading ? "Logging in..." : "Login"} 
-                  onPress={handleLogin} 
-                  style={styles.loginButton}
-                  disabled={loading}
-                />
-
-                <View style={styles.dividerContainer}>
-                  <View style={styles.divider} />
-                  <Text style={styles.dividerText}>OR LOGIN WITH</Text>
-                  <View style={styles.divider} />
-                </View>
-
-                <View style={styles.socialContainer}>
-                  <TouchableOpacity style={[styles.socialButton, styles.googleButton]}>
-                    <Ionicons name="logo-google" size={24} color="#DB4437" />
-                    <Text style={styles.socialButtonText}>Google</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity style={[styles.socialButton, styles.facebookButton]}>
-                    <Ionicons name="logo-facebook" size={24} color="#4267B2" />
-                    <Text style={styles.socialButtonText}>Facebook</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.footer}>
-                  <Text style={styles.footerText}>Don't have an account? </Text>
-                  <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                    <Text style={styles.signupText}>Sign Up</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
+            </ScrollView>
           </KeyboardAvoidingView>
         </SafeAreaView>
       </ImageBackground>

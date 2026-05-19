@@ -121,7 +121,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.userName}>{user?.name || 'Guest'}</Text>
           </View>
         </View>
-        <CartIcon color={theme.colors.headerDark} />
+        <CartIcon color="#FFFFFF" />
       </View>
 
       <View style={styles.searchContainer}>
@@ -278,7 +278,7 @@ const HomeScreen = ({ navigation }) => {
   const renderAllProducts = () => (
     <View style={[styles.productSection, { marginTop: 20 }]}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>All Products</Text>
+        <Text style={styles.sectionTitle}>{search ? 'Search Results' : 'All Products'}</Text>
       </View>
       <View style={styles.productGrid}>
         {loading ? (
@@ -288,7 +288,10 @@ const HomeScreen = ({ navigation }) => {
             </View>
           ))
         ) : (
-          products.slice(0, displayCount).map(product => (
+          products
+            .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+            .slice(0, displayCount)
+            .map(product => (
             <View key={product._id || product.id} style={styles.productGridItem}>
               <ProductCard
                 item={{...product, id: product._id || product.id, countInStock: product.countInStock}}
@@ -301,7 +304,7 @@ const HomeScreen = ({ navigation }) => {
           ))
         )}
       </View>
-      {isLoadMore && (
+      {isLoadMore && !search && (
         <View style={styles.loaderContainer}>
           <SkeletonLoader width={40} height={40} borderRadius={20} />
           <Text style={styles.loadingText}>Loading more...</Text>
@@ -324,10 +327,14 @@ const HomeScreen = ({ navigation }) => {
         scrollEventThrottle={400}
       >
         {renderHeader()}
-        {renderCategories()}
-        {renderBanners()}
-        {renderPopularProducts()}
-        {renderMidBanner()}
+        {!search && (
+          <>
+            {renderCategories()}
+            {renderBanners()}
+            {renderPopularProducts()}
+            {renderMidBanner()}
+          </>
+        )}
         {renderAllProducts()}
       </ScrollView>
     </View>
@@ -340,7 +347,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 30,
   },
   headerWrapper: {
     backgroundColor: theme.colors.headerDark,
@@ -417,9 +424,9 @@ const styles = StyleSheet.create({
     marginRight: 20,
   },
   categoryIconContainer: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',

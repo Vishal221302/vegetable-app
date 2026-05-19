@@ -42,7 +42,7 @@ const CartScreen = ({ navigation }) => {
         </View>
         
         <View style={styles.itemFooter}>
-          <Text style={styles.itemPrice}>${item.price}</Text>
+          <Text style={styles.itemPrice}>₹{item.price}</Text>
           <View style={styles.qtyContainer}>
             <TouchableOpacity 
               style={styles.qtyBtn}
@@ -123,16 +123,16 @@ const CartScreen = ({ navigation }) => {
             <View style={styles.summarySection}>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Subtotal</Text>
-                <Text style={styles.summaryValue}>${totalAmount.toFixed(2)}</Text>
+                <Text style={styles.summaryValue}>₹{totalAmount.toFixed(2)}</Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Shipping Fee</Text>
-                <Text style={styles.summaryValue}>$30.00</Text>
+                <Text style={styles.summaryValue}>₹30.00</Text>
               </View>
               <View style={styles.divider} />
               <View style={[styles.summaryRow, { marginTop: 10 }]}>
                 <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>${(totalAmount + 30).toFixed(2)}</Text>
+                <Text style={styles.totalValue}>₹{(totalAmount + 30).toFixed(2)}</Text>
               </View>
             </View>
 

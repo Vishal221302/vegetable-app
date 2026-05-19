@@ -56,7 +56,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const { totalCount: cartCount } = useSelector(state => state.cart);
 
   return (
-    <View style={[styles.tabBarContainer, { paddingBottom: Platform.OS === 'ios' ? insets.bottom : 0 }]}>
+    <View style={styles.tabBarContainer}>
       <View style={styles.tabBar}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
@@ -287,12 +287,8 @@ const AppNavigator = () => {
 
 const styles = StyleSheet.create({
   tabBarContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'transparent',
-    zIndex: 1000, // Ensure it's on top
+    backgroundColor: '#FFFFFF',
+    zIndex: 1000, 
   },
   tabBar: {
     flexDirection: 'row',
@@ -301,8 +297,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 10,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.05,

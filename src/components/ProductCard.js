@@ -29,7 +29,7 @@ const ProductCard = ({ item, onAdd, onPress, isFavorite, onFavoritePress }) => {
         <Text style={styles.title}>{item.name}</Text>
         <View style={styles.bottomRow}>
           <Text style={styles.priceContainer}>
-            <Text style={styles.price}>${item.price.toFixed(2)}</Text>
+            <Text style={styles.price}>₹{item.price.toFixed(2)}</Text>
             <Text style={styles.pricePer}> /{item.pricePer}</Text>
           </Text>
           <TouchableOpacity style={styles.addButton} onPress={() => onAdd(item)}>
