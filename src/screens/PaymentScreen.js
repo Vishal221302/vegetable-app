@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { theme } from '../utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '../components/Button';
@@ -7,20 +7,45 @@ import { useSelector, useDispatch } from 'react-redux';
 import { clearCart } from '../store/slices/cartSlice';
 import api from '../utils/api';
 import { ActivityIndicator } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 const PaymentScreen = ({ navigation, route }) => {
   const { shippingAddress } = route.params || {};
   const [selectedMethod, setSelectedMethod] = useState('cod');
   const { items, totalAmount } = useSelector(state => state.cart);
+  const { user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const paymentMethods = [
+  const [paymentMethods, setPaymentMethods] = useState([
     { id: 'cod', name: 'Cash on Delivery', icon: 'cash-outline' },
-    { id: 'upi', name: 'UPI', icon: 'phone-portrait-outline' },
-    { id: 'card', name: 'Credit / Debit Card', icon: 'card-outline' },
-  ];
+  ]);
+  const [razorpayKeyId, setRazorpayKeyId] = useState('');
+  
+  // Razorpay WebView state
+  const [showWebView, setShowWebView] = useState(false);
+  const [checkoutHtml, setCheckoutHtml] = useState('');
+  const [currentOrderId, setCurrentOrderId] = useState('');
+
+  useEffect(() => {
+    const fetchPaymentConfig = async () => {
+      try {
+        const { data } = await api.get('/admin/config/razorpay');
+        if (data.razorpayEnabled) {
+          setPaymentMethods([
+            { id: 'cod', name: 'Cash on Delivery', icon: 'cash-outline' },
+            { id: 'upi', name: 'UPI (Razorpay)', icon: 'phone-portrait-outline' },
+            { id: 'card', name: 'Card (Razorpay)', icon: 'card-outline' },
+          ]);
+          setRazorpayKeyId(data.razorpayKeyId);
+        }
+      } catch (err) {
+        console.error('Failed to fetch payment config:', err);
+      }
+    };
+    fetchPaymentConfig();
+  }, []);
 
   const handlePlaceOrder = async () => {
     if (!shippingAddress) {
@@ -49,8 +74,18 @@ const PaymentScreen = ({ navigation, route }) => {
       const response = await api.post('/orders', orderData);
 
       if (response.status === 201) {
-        dispatch(clearCart());
-        navigation.navigate('OrderSuccess');
+        const createdOrder = response.data;
+        
+        if (selectedMethod !== 'cod' && createdOrder.razorpayOrder) {
+          // Razorpay flow
+          setCurrentOrderId(createdOrder._id);
+          generateRazorpayHtml(createdOrder.razorpayOrder);
+          setShowWebView(true);
+        } else {
+          // Cash on delivery flow
+          dispatch(clearCart());
+          navigation.navigate('OrderSuccess');
+        }
       }
     } catch (err) {
       console.error('Order Error:', err);
@@ -58,6 +93,128 @@ const PaymentScreen = ({ navigation, route }) => {
       alert(err.response?.data?.message || 'Failed to place order');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateRazorpayHtml = (razorpayOrder) => {
+    const userName = user?.name || 'Customer';
+    const userEmail = user?.email || 'customer@example.com';
+    const userPhone = user?.phone || '9999999999';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body {
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+          }
+          .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: #10B981;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          h3 { color: #1A1A1A; margin: 0 0 10px 0; font-weight: 600; }
+          p { color: #666666; font-size: 14px; margin: 0; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="spinner"></div>
+        <h3>Processing Payment</h3>
+        <p>Please complete your payment on the Razorpay interface.</p>
+        
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        <script>
+          const options = {
+            "key": "${razorpayOrder.keyId}",
+            "amount": "${razorpayOrder.amount}",
+            "currency": "INR",
+            "name": "GreenFresh",
+            "description": "Organic Vegetables Order Payment",
+            "order_id": "${razorpayOrder.id}",
+            "handler": function (response){
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                status: 'success',
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature
+              }));
+            },
+            "prefill": {
+              "name": "${userName}",
+              "email": "${userEmail}",
+              "contact": "${userPhone}"
+            },
+            "theme": {
+              "color": "#10B981"
+            },
+            "modal": {
+              "ondismiss": function() {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  status: 'cancel'
+                }));
+              }
+            }
+          };
+          const rzp1 = new Razorpay(options);
+          rzp1.open();
+        </script>
+      </body>
+      </html>
+    `;
+    setCheckoutHtml(html);
+  };
+
+  const handleNavigationStateChange = async (event) => {
+    // We catch messages using onMessage, but we also can check URL or other triggers if needed
+  };
+
+  const handleWebViewMessage = async (event) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      setShowWebView(false);
+
+      if (data.status === 'success') {
+        setLoading(true);
+        try {
+          const response = await api.post(`/orders/${currentOrderId}/verify`, {
+            razorpayPaymentId: data.razorpayPaymentId,
+            razorpaySignature: data.razorpaySignature
+          });
+
+          if (response.data.success) {
+            dispatch(clearCart());
+            navigation.navigate('OrderSuccess');
+          } else {
+            alert('Payment verification failed. Please contact support.');
+          }
+        } catch (err) {
+          console.error('Verify error:', err);
+          alert('Payment verification failed. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        alert('Payment cancelled or failed');
+      }
+    } catch (err) {
+      console.error('Error parsing WebView message:', err);
     }
   };
 
@@ -118,11 +275,45 @@ const PaymentScreen = ({ navigation, route }) => {
           <ActivityIndicator size="large" color={theme.colors.primary} />
         ) : (
           <Button 
-            title="Place Order" 
+            title={selectedMethod === 'cod' ? "Place Order (COD)" : "Pay Now with Razorpay"} 
             onPress={handlePlaceOrder} 
           />
         )}
       </View>
+
+      {/* Razorpay Checkout WebView Modal */}
+      <Modal
+        visible={showWebView}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowWebView(false);
+          alert('Payment cancelled');
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity 
+              onPress={() => {
+                setShowWebView(false);
+                alert('Payment cancelled');
+              }}
+              style={styles.closeButton}
+            >
+              <Ionicons name="close" size={28} color="#1A1A1A" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Secure Checkout</Text>
+            <View style={{ width: 28 }} /> {/* Spacer */}
+          </View>
+          <WebView
+            source={{ html: checkoutHtml }}
+            onMessage={handleWebViewMessage}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            originWhitelist={['*']}
+            style={{ flex: 1 }}
+          />
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -199,6 +390,25 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
     borderColor: theme.colors.border,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.l,
+    paddingVertical: theme.spacing.m,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: '#ffffff',
+    paddingTop: theme.spacing.xxl, // Account for notch
+  },
+  closeButton: {
+    padding: theme.spacing.xs,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
   }
 });
 

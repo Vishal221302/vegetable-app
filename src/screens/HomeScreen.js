@@ -36,7 +36,7 @@ const HomeScreen = ({ navigation }) => {
           api.get('/products').catch(() => ({ data: dummyProducts })),
           api.get('/banners').catch(() => ({ data: dummyBanners }))
         ]);
-        
+
         setCategories(catRes.data.length > 0 ? catRes.data : dummyCategories);
         setProducts(prodRes.data.length > 0 ? prodRes.data : dummyProducts);
         setBanners(banRes.data.length > 0 ? banRes.data : dummyBanners);
@@ -58,14 +58,14 @@ const HomeScreen = ({ navigation }) => {
 
   const handleAddToCart = async (product) => {
     try {
-      await dispatch(addToCartApi({ 
-        productId: product._id || product.id, 
+      await dispatch(addToCartApi({
+        productId: product._id || product.id,
         quantity: 1,
         price: product.price,
         name: product.name,
         image: product.image
       })).unwrap();
-      
+
       Toast.show({
         type: 'success',
         text1: 'Added to Cart',
@@ -190,7 +190,7 @@ const HomeScreen = ({ navigation }) => {
               else if (banner.color.includes('amber')) bgColor = '#F59E0B';
               else if (banner.color.startsWith('#')) bgColor = banner.color;
             }
-            
+
             return (
               <View key={banner._id || banner.id} style={[styles.bannerCard, { backgroundColor: bgColor }]}>
                 <View style={styles.bannerInfo}>
@@ -242,8 +242,8 @@ const HomeScreen = ({ navigation }) => {
             popularProducts.map(product => (
               <View key={product._id || product.id} style={styles.productGridItem}>
                 <ProductCard
-                  item={{...product, id: product._id || product.id, countInStock: product.countInStock}}
-                  onPress={() => navigation.navigate('ProductDetail', { product: {...product, id: product._id || product.id} })}
+                  item={{ ...product, id: product._id || product.id, countInStock: product.countInStock }}
+                  onPress={() => navigation.navigate('ProductDetail', { product: { ...product, id: product._id || product.id } })}
                   onAdd={handleAddToCart}
                   isFavorite={wishlistItems.some(fav => (fav._id || fav.id) === (product._id || product.id))}
                   onFavoritePress={handleToggleWishlist}
@@ -260,9 +260,9 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.midBannerContainer}>
       <View style={styles.midBannerCard}>
         <View style={styles.midBannerOverlay} />
-        <Image 
-          source={{ uri: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80' }} 
-          style={styles.midBannerImage} 
+        <Image
+          source={{ uri: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80' }}
+          style={styles.midBannerImage}
         />
         <View style={styles.midBannerContent}>
           <Text style={styles.midBannerTitle}>Farm Fresh Vegetables</Text>
@@ -292,16 +292,16 @@ const HomeScreen = ({ navigation }) => {
             .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
             .slice(0, displayCount)
             .map(product => (
-            <View key={product._id || product.id} style={styles.productGridItem}>
-              <ProductCard
-                item={{...product, id: product._id || product.id, countInStock: product.countInStock}}
-                onPress={() => navigation.navigate('ProductDetail', { product: {...product, id: product._id || product.id} })}
-                onAdd={handleAddToCart}
-                isFavorite={wishlistItems.some(fav => (fav._id || fav.id) === (product._id || product.id))}
-                onFavoritePress={handleToggleWishlist}
-              />
-            </View>
-          ))
+              <View key={product._id || product.id} style={styles.productGridItem}>
+                <ProductCard
+                  item={{ ...product, id: product._id || product.id, countInStock: product.countInStock }}
+                  onPress={() => navigation.navigate('ProductDetail', { product: { ...product, id: product._id || product.id } })}
+                  onAdd={handleAddToCart}
+                  isFavorite={wishlistItems.some(fav => (fav._id || fav.id) === (product._id || product.id))}
+                  onFavoritePress={handleToggleWishlist}
+                />
+              </View>
+            ))
         )}
       </View>
       {isLoadMore && !search && (
@@ -316,8 +316,8 @@ const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         onScroll={({ nativeEvent }) => {
           if (isCloseToBottom(nativeEvent)) {
@@ -424,9 +424,9 @@ const styles = StyleSheet.create({
     marginRight: 20,
   },
   categoryIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
