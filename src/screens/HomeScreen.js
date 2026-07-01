@@ -2,19 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Image, FlatList, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../utils/theme';
+import { theme, getDiscountedPrice } from '../utils/theme';
 import { categories as dummyCategories, products as dummyProducts, banners as dummyBanners } from '../utils/dummyData';
 import api from '../utils/api';
 import CategoryItem from '../components/CategoryItem';
 import ProductCard from '../components/ProductCard';
-import { useDispatch } from 'react-redux';
-import { fetchCart, addToCartApi } from '../store/slices/cartSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchCart, addToCartApi, addToCartLocal } from '../store/slices/cartSlice';
 import { fetchWishlist, toggleWishlistApi } from '../store/slices/wishlistSlice';
 import Toast from 'react-native-toast-message';
-
 import SkeletonLoader, { ProductSkeleton } from '../components/SkeletonLoader';
-import { useSelector } from 'react-redux';
 import CartIcon from '../components/CartIcon';
+import { useTheme } from '../context/ThemeContext';
 
 const HomeScreen = ({ navigation }) => {
   const [search, setSearch] = useState('');
@@ -25,8 +24,9 @@ const HomeScreen = ({ navigation }) => {
   const [displayCount, setDisplayCount] = useState(8);
   const [isLoadMore, setIsLoadMore] = useState(false);
   const dispatch = useDispatch();
-  const { user } = useSelector(state => state.auth);
+  const { user, isAuthenticated } = useSelector(state => state.auth);
   const { items: wishlistItems } = useSelector(state => state.wishlist);
+  const { colors, isDark } = useTheme();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,13 +58,19 @@ const HomeScreen = ({ navigation }) => {
 
   const handleAddToCart = async (product) => {
     try {
-      await dispatch(addToCartApi({
+      const productPayload = {
         productId: product._id || product.id,
         quantity: 1,
-        price: product.price,
+        price: getDiscountedPrice(product.price, product.tag),
         name: product.name,
         image: product.image
-      })).unwrap();
+      };
+      
+      if (isAuthenticated) {
+        await dispatch(addToCartApi(productPayload)).unwrap();
+      } else {
+        dispatch(addToCartLocal(productPayload));
+      }
 
       Toast.show({
         type: 'success',
@@ -83,6 +89,16 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const handleToggleWishlist = (product) => {
+    if (!isAuthenticated) {
+      Toast.show({
+        type: 'error',
+        text1: '🔒 Login Required',
+        text2: 'Please login first to save favourites',
+        visibilityTime: 2500,
+      });
+      navigation.navigate('Login');
+      return;
+    }
     dispatch(toggleWishlistApi(product));
     const isFav = wishlistItems.some(item => (item._id || item.id) === (product._id || product.id));
     Toast.show({
@@ -111,25 +127,35 @@ const HomeScreen = ({ navigation }) => {
   const renderHeader = () => (
     <View style={styles.headerWrapper}>
       <View style={styles.headerTop}>
-        <View style={styles.userInfo}>
-          <Image
-            source={{ uri: user?.profileImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}
-            style={styles.profileImage}
-          />
-          <View>
-            <Text style={styles.welcomeText}>Welcome</Text>
-            <Text style={styles.userName}>{user?.name || 'Guest'}</Text>
+        {isAuthenticated ? (
+          <View style={styles.userInfo}>
+            <Image
+              source={{ uri: user?.profileImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}
+              style={styles.profileImage}
+            />
+            <View>
+              <Text style={styles.welcomeText}>Welcome</Text>
+              <Text style={styles.userName}>{user?.name || 'User'}</Text>
+            </View>
           </View>
-        </View>
+        ) : (
+          <TouchableOpacity style={styles.guestLoginBtn} onPress={() => navigation.navigate('Login')}>
+            <Ionicons name="person-circle-outline" size={32} color="#FFFFFF" />
+            <View style={{ marginLeft: 10 }}>
+              <Text style={styles.welcomeText}>Welcome, Guest</Text>
+              <Text style={styles.guestLoginText}>Tap to Login / Sign Up →</Text>
+            </View>
+          </TouchableOpacity>
+        )}
         <CartIcon color="#FFFFFF" />
       </View>
 
-      <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={20} color={theme.colors.textLight} style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: isDark ? colors.surfaceSecondary : '#FFFFFF' }]}>
+        <Ionicons name="search-outline" size={20} color={colors.textLight} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Search here..."
-          placeholderTextColor={theme.colors.textLight}
+          placeholderTextColor={colors.textLight}
           value={search}
           onChangeText={setSearch}
         />
@@ -150,10 +176,10 @@ const HomeScreen = ({ navigation }) => {
         ) : (
           <>
             <TouchableOpacity style={styles.categoryItemWrapper} onPress={() => navigation.navigate('ProductList', { category: 'All' })}>
-              <View style={[styles.categoryIconContainer, { backgroundColor: theme.colors.primary }]}>
-                <Ionicons name="menu-outline" size={32} color={theme.colors.surface} />
+              <View style={[styles.categoryIconContainer, { backgroundColor: colors.primary }]}>
+                <Ionicons name="menu-outline" size={32} color="#FFFFFF" />
               </View>
-              <Text style={[styles.categoryName, { color: theme.colors.primary }]}>All</Text>
+              <Text style={[styles.categoryName, { color: colors.primary }]}>All</Text>
             </TouchableOpacity>
             {categories.map(category => (
               <TouchableOpacity
@@ -161,10 +187,10 @@ const HomeScreen = ({ navigation }) => {
                 style={styles.categoryItemWrapper}
                 onPress={() => navigation.navigate('ProductList', { category: category.name })}
               >
-                <View style={styles.categoryIconContainer}>
+                <View style={[styles.categoryIconContainer, { backgroundColor: colors.card }]}>
                   <Image source={{ uri: category.image || category.icon || 'https://via.placeholder.com/60' }} style={styles.categoryIcon} />
                 </View>
-                <Text style={styles.categoryName}>{category.name}</Text>
+                <Text style={[styles.categoryName, { color: colors.textSecondary }]}>{category.name}</Text>
               </TouchableOpacity>
             ))}
           </>
@@ -314,8 +340,8 @@ const HomeScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -344,7 +370,6 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   scrollContent: {
     paddingBottom: 30,
@@ -385,13 +410,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  notificationBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
+  guestLoginBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
+  },
+  guestLoginText: {
+    color: '#A7F3D0',
+    fontSize: 13,
+    fontWeight: '700',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -436,7 +462,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 2,
     marginBottom: 10,
-    overflow: 'hidden', // Add overflow hidden for circle image
+    overflow: 'hidden',
   },
   categoryIcon: {
     width: '100%',

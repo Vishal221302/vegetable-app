@@ -10,6 +10,7 @@ import Input from '../components/Input';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../utils/api';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
 
 const AddressScreen = ({ navigation, route }) => {
   const mode = route.params?.mode; // 'checkout' or undefined
@@ -19,6 +20,7 @@ const AddressScreen = ({ navigation, route }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { colors, isDark } = useTheme();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -98,8 +100,8 @@ const AddressScreen = ({ navigation, route }) => {
         street: 'Adajan Road',
         landmark: 'Near Star Bazar',
         city: 'Surat',
-        state: 'Gujarat',
-        pincode: '395009'
+        state: 'Surat',
+        pincode: 'surat',
       }));
       setIsLocating(false);
       Alert.alert('Location Found', 'Your current address has been partially filled.');
@@ -179,38 +181,42 @@ const AddressScreen = ({ navigation, route }) => {
   /* ─── Render Components ─── */
   const AddressCard = ({ item }) => (
     <TouchableOpacity 
-      style={[styles.addrCard, selectedId === item._id && styles.activeAddrCard]}
+      style={[
+        styles.addrCard, 
+        { backgroundColor: colors.card, borderColor: colors.border },
+        selectedId === item._id && [styles.activeAddrCard, { borderColor: colors.primary }]
+      ]}
       onPress={() => setSelectedId(item._id)}
       activeOpacity={0.8}
     >
       <View style={styles.addrHeader}>
-        <View style={styles.addrTypeBadge}>
+        <View style={[styles.addrTypeBadge, { backgroundColor: colors.primaryLight }]}>
           <Ionicons 
             name={item.addressType === 'Home' ? 'home' : 'business'} 
             size={14} 
-            color={theme.colors.primary} 
+            color={colors.primary} 
           />
-          <Text style={styles.addrTypeText}>{item.addressType}</Text>
+          <Text style={[styles.addrTypeText, { color: colors.primary }]}>{item.addressType}</Text>
         </View>
         <View style={styles.addrActions}>
           <TouchableOpacity onPress={() => editAddress(item)} style={styles.iconBtn}>
-            <Ionicons name="pencil" size={18} color="#666" />
+            <Ionicons name="pencil" size={18} color={colors.textLight} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => deleteAddress(item._id)} style={styles.iconBtn}>
-            <Ionicons name="trash-outline" size={18} color="#FF4D4F" />
+            <Ionicons name="trash-outline" size={18} color={colors.error} />
           </TouchableOpacity>
         </View>
       </View>
 
-      <Text style={styles.addrName}>{item.fullName}</Text>
-      <Text style={styles.addrText} numberOfLines={2}>
+      <Text style={[styles.addrName, { color: colors.text }]}>{item.fullName}</Text>
+      <Text style={[styles.addrText, { color: colors.textSecondary }]} numberOfLines={2}>
         {item.houseNo}, {item.street}, {item.landmark && item.landmark + ', '}{item.city}, {item.pincode}
       </Text>
-      <Text style={styles.addrMobile}>📞 {item.mobileNumber}</Text>
+      <Text style={[styles.addrMobile, { color: colors.text }]}>📞 {item.mobileNumber}</Text>
 
       {item.isDefault && (
-        <View style={styles.defaultTag}>
-          <Text style={styles.defaultTagText}>DEFAULT</Text>
+        <View style={[styles.defaultTag, { backgroundColor: colors.surfaceSecondary }]}>
+          <Text style={[styles.defaultTagText, { color: colors.textLight }]}>DEFAULT</Text>
         </View>
       )}
 
@@ -218,7 +224,7 @@ const AddressScreen = ({ navigation, route }) => {
         <Ionicons 
           name={selectedId === item._id ? "checkmark-circle" : "ellipse-outline"} 
           size={24} 
-          color={selectedId === item._id ? theme.colors.primary : "#DDD"} 
+          color={selectedId === item._id ? colors.primary : colors.border} 
         />
       </View>
     </TouchableOpacity>
@@ -226,20 +232,20 @@ const AddressScreen = ({ navigation, route }) => {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingBox}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View style={[styles.loadingBox, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>
+        <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
             {viewState === 'list' ? 'My Addresses' : (formData._id ? 'Edit Address' : 'Add New Address')}
           </Text>
           {viewState === 'list' && (
@@ -247,8 +253,8 @@ const AddressScreen = ({ navigation, route }) => {
               style={styles.addSmallBtn}
               onPress={() => { resetForm(); setViewState('form'); }}
             >
-              <Ionicons name="add-circle" size={20} color={theme.colors.primary} />
-              <Text style={styles.addSmallText}>Add New</Text>
+              <Ionicons name="add-circle" size={20} color={colors.primary} />
+              <Text style={[styles.addSmallText, { color: colors.primary }]}>Add New</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -257,8 +263,8 @@ const AddressScreen = ({ navigation, route }) => {
           <ScrollView contentContainerStyle={styles.listContent}>
             {addresses.length === 0 ? (
               <View style={styles.emptyBox}>
-                <Ionicons name="location-outline" size={80} color="#EEE" />
-                <Text style={styles.emptyText}>No addresses saved in cloud yet</Text>
+                <Ionicons name="location-outline" size={80} color={colors.border} />
+                <Text style={[styles.emptyText, { color: colors.textLight }]}>No addresses saved in cloud yet</Text>
                 <Button 
                   title="Add Your First Address" 
                   onPress={() => setViewState('form')} 
@@ -273,13 +279,13 @@ const AddressScreen = ({ navigation, route }) => {
           </ScrollView>
         ) : (
           <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
-            <TouchableOpacity style={styles.locationBtn} onPress={handleGetLocation} disabled={isLocating}>
+            <TouchableOpacity style={[styles.locationBtn, { backgroundColor: colors.primary }]} onPress={handleGetLocation} disabled={isLocating}>
               {isLocating ? <ActivityIndicator size="small" color="#FFF" /> : (
                 <><Ionicons name="navigate-circle" size={24} color="#FFF" /><Text style={styles.locationBtnText}>Use GPS Location</Text></>
               )}
             </TouchableOpacity>
 
-            <View style={styles.formCard}>
+            <View style={[styles.formCard, { backgroundColor: colors.card }]}>
               <Input label="Full Name *" value={formData.fullName} onChangeText={(v) => handleInputChange('fullName', v)} error={errors.fullName} />
               <Input label="Mobile Number *" keyboardType="phone-pad" value={formData.mobileNumber} onChangeText={(v) => handleInputChange('mobileNumber', v)} error={errors.mobileNumber} />
               <Input label="House / Flat No. *" value={formData.houseNo} onChangeText={(v) => handleInputChange('houseNo', v)} error={errors.houseNo} />
@@ -291,14 +297,14 @@ const AddressScreen = ({ navigation, route }) => {
               </View>
               <View style={styles.typeToggleRow}>
                 {['Home', 'Office'].map(type => (
-                  <TouchableOpacity key={type} style={[styles.typeToggleBtn, formData.addressType === type && styles.activeTypeToggle]} onPress={() => handleInputChange('addressType', type)}>
-                    <Text style={[styles.typeToggleText, formData.addressType === type && styles.activeTypeToggleText]}>{type}</Text>
+                  <TouchableOpacity key={type} style={[styles.typeToggleBtn, { borderColor: colors.border }, formData.addressType === type && [styles.activeTypeToggle, { backgroundColor: colors.primary, borderColor: colors.primary }]]} onPress={() => handleInputChange('addressType', type)}>
+                    <Text style={[styles.typeToggleText, { color: colors.textSecondary }, formData.addressType === type && styles.activeTypeToggleText]}>{type}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>Make Default</Text>
-                <Switch value={formData.isDefault} onValueChange={(v) => handleInputChange('isDefault', v)} trackColor={{ true: theme.colors.primary }} />
+              <View style={[styles.switchRow, { borderTopColor: colors.border }]}>
+                <Text style={[styles.switchLabel, { color: colors.text }]}>Make Default</Text>
+                <Switch value={formData.isDefault} onValueChange={(v) => handleInputChange('isDefault', v)} trackColor={{ true: colors.primary }} />
               </View>
             </View>
 
@@ -312,7 +318,7 @@ const AddressScreen = ({ navigation, route }) => {
       </KeyboardAvoidingView>
 
       {viewState === 'list' && addresses.length > 0 && mode === 'checkout' && (
-        <View style={styles.footer}>
+        <View style={[styles.footer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
           <Button title="Proceed to Payment" onPress={handleProceed} style={styles.mainBtn} />
         </View>
       )}
@@ -321,54 +327,54 @@ const AddressScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
+  container: { flex: 1 },
   loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { 
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 22, paddingTop: 20, paddingBottom: 15, backgroundColor: '#FFF' 
+    paddingHorizontal: 22, paddingTop: 20, paddingBottom: 15 
   },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#1A1A1A' },
+  headerTitle: { fontSize: 20, fontWeight: '800' },
   addSmallBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  addSmallText: { color: theme.colors.primary, fontWeight: '700', fontSize: 14 },
+  addSmallText: { fontWeight: '700', fontSize: 14 },
   listContent: { padding: 22 },
   addrCard: { 
-    backgroundColor: '#FFF', borderRadius: 20, padding: 18, marginBottom: 15,
-    borderWidth: 1.5, borderColor: '#F0F0F0', position: 'relative'
+    borderRadius: 20, padding: 18, marginBottom: 15,
+    borderWidth: 1.5, position: 'relative'
   },
-  activeAddrCard: { borderColor: theme.colors.primary, backgroundColor: '#FDFEFF' },
+  activeAddrCard: { },
   addrHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
   addrTypeBadge: { 
     flexDirection: 'row', alignItems: 'center', gap: 5, 
-    backgroundColor: '#F0FDF4', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 
   },
-  addrTypeText: { fontSize: 11, fontWeight: '700', color: theme.colors.primary, textTransform: 'uppercase' },
+  addrTypeText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
   addrActions: { flexDirection: 'row', gap: 15 },
   iconBtn: { padding: 4 },
-  addrName: { fontSize: 16, fontWeight: '700', color: '#1A1A1A', marginBottom: 4 },
-  addrText: { fontSize: 13, color: '#666', lineHeight: 18, paddingRight: 40 },
-  addrMobile: { fontSize: 13, fontWeight: '600', color: '#333', marginTop: 8 },
-  defaultTag: { position: 'absolute', top: 18, right: 100, backgroundColor: '#F3F4F6', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
-  defaultTagText: { fontSize: 9, fontWeight: '800', color: '#999' },
+  addrName: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  addrText: { fontSize: 13, lineHeight: 18, paddingRight: 40 },
+  addrMobile: { fontSize: 13, fontWeight: '600', marginTop: 8 },
+  defaultTag: { position: 'absolute', top: 18, right: 100, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
+  defaultTagText: { fontSize: 9, fontWeight: '800' },
   selectionIndicator: { position: 'absolute', bottom: 18, right: 18 },
   emptyBox: { alignItems: 'center', marginTop: 100 },
-  emptyText: { fontSize: 16, color: '#AAA', fontWeight: '600', marginTop: 10 },
+  emptyText: { fontSize: 16, fontWeight: '600', marginTop: 10 },
   formContent: { padding: 22 },
   locationBtn: { 
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: '#4F46E5', paddingVertical: 15, borderRadius: 16, marginBottom: 20 
+    paddingVertical: 15, borderRadius: 16, marginBottom: 20 
   },
   locationBtnText: { color: '#FFF', fontWeight: '800', fontSize: 15 },
-  formCard: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, marginBottom: 20 },
+  formCard: { borderRadius: 24, padding: 20, marginBottom: 20 },
   row: { flexDirection: 'row' },
   typeToggleRow: { flexDirection: 'row', gap: 10, marginBottom: 15 },
-  typeToggleBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5, borderColor: '#F0F0F0', alignItems: 'center' },
-  activeTypeToggle: { borderColor: theme.colors.primary, backgroundColor: theme.colors.primary },
-  typeToggleText: { fontWeight: '700', color: '#666' },
+  typeToggleBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5, alignItems: 'center' },
+  activeTypeToggle: { },
+  typeToggleText: { fontWeight: '700' },
   activeTypeToggleText: { color: '#FFF' },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 15, borderTopWidth: 1, borderTopColor: '#F0F0F0' },
-  switchLabel: { fontSize: 15, fontWeight: '600', color: '#1A1A1A' },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 15, borderTopWidth: 1 },
+  switchLabel: { fontSize: 15, fontWeight: '600' },
   formActionRow: { flexDirection: 'row' },
-  footer: { padding: 22, backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F0F0F0' },
+  footer: { padding: 22, borderTopWidth: 1 },
   mainBtn: { height: 56, borderRadius: 18 }
 });
 

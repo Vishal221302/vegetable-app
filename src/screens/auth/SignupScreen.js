@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -17,6 +17,7 @@ import Button from '../../components/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '../../store/slices/authSlice';
+import { syncCartWithServer } from '../../store/slices/cartSlice';
 
 const { width, height } = Dimensions.get('window');
 
@@ -26,7 +27,27 @@ const SignupScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
+  const { loading, isAuthenticated } = useSelector((state) => state.auth);
+  const cartItems = useSelector((state) => state.cart.items);
+
+  // After signup success, sync guest cart with server and go back
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (cartItems.length > 0) {
+        const itemsToSync = cartItems.map(i => ({
+          productId: i.id || i.productId,
+          quantity: i.quantity
+        }));
+        dispatch(syncCartWithServer(itemsToSync));
+      }
+
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.replace('Main');
+      }
+    }
+  }, [isAuthenticated]);
 
   const handleSignup = () => {
     if (name && (phone || email) && password) {

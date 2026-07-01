@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../../store/slices/authSlice';
+import { syncCartWithServer } from '../../store/slices/cartSlice';
 import { theme } from '../../utils/theme';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -24,11 +25,31 @@ const LoginScreen = ({ navigation }) => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
+  const { loading, isAuthenticated } = useSelector((state) => state.auth);
+  const cartItems = useSelector((state) => state.cart.items);
+
+  // After login success, sync guest cart with server and go back
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (cartItems.length > 0) {
+        const itemsToSync = cartItems.map(i => ({
+          productId: i.id || i.productId,
+          quantity: i.quantity
+        }));
+        dispatch(syncCartWithServer(itemsToSync));
+      }
+      
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.replace('Main');
+      }
+    }
+  }, [isAuthenticated]);
 
   const handleLogin = () => {
     if (phone && password) {
-      dispatch(loginUser({ email: phone, password })); // we use email/phone field
+      dispatch(loginUser({ email: phone, password }));
     }
   };
 

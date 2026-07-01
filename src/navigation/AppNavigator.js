@@ -4,8 +4,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSelector, useDispatch } from 'react-redux';
 import { useEffect } from 'react';
 import { loadUser } from '../store/slices/authSlice';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../context/ThemeContext';
 
 // Onboarding Screens
 import SplashScreen from '../screens/onboarding/SplashScreen';
@@ -32,6 +33,8 @@ import OrdersScreen from '../screens/OrdersScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import HelpSupportScreen from '../screens/HelpSupportScreen';
+import ChatScreen from '../screens/ChatScreen';
+import EmailSupportScreen from '../screens/EmailSupportScreen';
 
 import { theme } from '../utils/theme';
 
@@ -54,10 +57,11 @@ const Tab = createBottomTabNavigator();
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const insets = useSafeAreaInsets();
   const { totalCount: cartCount } = useSelector(state => state.cart);
+  const { colors, isDark } = useTheme();
 
   return (
-    <View style={styles.tabBarContainer}>
-      <View style={styles.tabBar}>
+    <View style={[styles.tabBarContainer, { backgroundColor: colors.tabBarBg }]}>
+      <View style={[styles.tabBar, { backgroundColor: colors.tabBarBg }]}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
@@ -99,8 +103,8 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           if (route.name === 'CartTab') {
             return (
               <View key={route.key} style={styles.floatingButtonContainer}>
-                {/* This white circle creates the notch effect */}
-                <View style={styles.notchBackground} />
+                {/* This notch background matches tab bar */}
+                <View style={[styles.notchBackground, { backgroundColor: colors.tabBarBg }]} />
                 <TouchableOpacity
                   onPress={onPress}
                   style={styles.floatingCart}
@@ -127,11 +131,11 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
               <Ionicons 
                 name={iconName} 
                 size={24} 
-                color={isFocused ? theme.colors.primary : '#A0A0A0'} 
+                color={isFocused ? colors.primary : colors.textLight} 
               />
               <Text style={[
                 styles.tabLabel, 
-                { color: isFocused ? theme.colors.primary : '#A0A0A0' }
+                { color: isFocused ? colors.primary : colors.textLight }
               ]}>
                 {label}
               </Text>
@@ -162,13 +166,13 @@ const AppNavigator = () => {
   const dispatch = useDispatch();
   const { isAuthenticated, loading } = useSelector(state => state.auth);
   const [isFirstTime, setIsFirstTime] = React.useState(null);
+  const { isDark, colors } = useTheme();
 
   useEffect(() => {
     const checkFirstTime = async () => {
       try {
         const value = await AsyncStorage.getItem('alreadyLaunched');
         if (value === null) {
-          // First time launch
           setIsFirstTime(true);
         } else {
           setIsFirstTime(false);
@@ -184,102 +188,52 @@ const AppNavigator = () => {
 
   if (loading || isFirstTime === null) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <NavigationContainer>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.headerBg} />
       <Stack.Navigator
+        initialRouteName={isFirstTime ? 'Splash' : 'Main'}
         screenOptions={{
           headerStyle: {
-            backgroundColor: theme.colors.surface,
+            backgroundColor: colors.headerBg,
           },
-          headerTintColor: theme.colors.text,
+          headerTintColor: colors.text,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
           headerShadowVisible: false,
         }}
       >
-        {!isAuthenticated ? (
-          // Onboarding & Auth Stack
-          <Stack.Group screenOptions={{ headerShown: false }}>
-            {isFirstTime ? (
-              <>
-                <Stack.Screen name="Splash" component={SplashScreen} />
-                <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-                <Stack.Screen name="Login" component={LoginScreen} />
-              </>
-            ) : (
-              <Stack.Screen name="Login" component={LoginScreen} />
-            )}
-            <Stack.Screen name="Signup" component={SignupScreen} />
-            <Stack.Screen name="Otp" component={OtpScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-          </Stack.Group>
-        ) : (
-          // Main Stack
-          <Stack.Group>
-            <Stack.Screen 
-              name="Main" 
-              component={MainTabs} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="ProductList" 
-              component={ProductListScreen} 
-              options={{ title: 'Products' }}
-            />
-            <Stack.Screen 
-              name="Categories" 
-              component={CategoriesScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="ProductDetail" 
-              component={ProductDetailScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="Address" 
-              component={AddressScreen} 
-              options={{ title: 'Select Address' }}
-            />
-            <Stack.Screen 
-              name="Payment" 
-              component={PaymentScreen} 
-              options={{ title: 'Payment' }}
-            />
-            <Stack.Screen 
-              name="EditProfile" 
-              component={EditProfileScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="Settings" 
-              component={SettingsScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="HelpSupport" 
-              component={HelpSupportScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="Cart" 
-              component={CartScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="OrderSuccess" 
-              component={OrderSuccessScreen} 
-              options={{ headerShown: false }}
-            />
-          </Stack.Group>
-        )}
+        {/* Onboarding — always present so navigation works */}
+        <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
+
+        {/* Auth — always present so goBack() returns user to prev screen after login */}
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Signup" component={SignupScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Otp" component={OtpScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
+
+        {/* Main — accessible to all users including guests */}
+        <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+        <Stack.Screen name="ProductList" component={ProductListScreen} options={{ title: 'Products' }} />
+        <Stack.Screen name="Categories" component={CategoriesScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Address" component={AddressScreen} options={{ title: 'Select Address' }} />
+        <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Payment' }} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="HelpSupport" component={HelpSupportScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Cart" component={CartScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="EmailSupport" component={EmailSupportScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -287,22 +241,18 @@ const AppNavigator = () => {
 
 const styles = StyleSheet.create({
   tabBarContainer: {
-    backgroundColor: '#FFFFFF',
     zIndex: 1000, 
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     height: 70,
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 10,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
     elevation: 20,
   },
   tabItem: {
@@ -327,17 +277,16 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#FFFFFF',
   },
   floatingCart: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#01B763',
     justifyContent: 'center',
     alignItems: 'center',
     top: -30,
-    shadowColor: theme.colors.primary,
+    shadowColor: '#01B763',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
@@ -347,7 +296,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -2,
-    backgroundColor: theme.colors.error,
+    backgroundColor: '#FF3B30',
     borderRadius: 9,
     width: 18,
     height: 18,

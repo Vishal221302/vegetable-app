@@ -4,8 +4,11 @@ import { theme } from '../utils/theme';
 import { categories } from '../utils/dummyData';
 import { Ionicons } from '@expo/vector-icons';
 import CartIcon from '../components/CartIcon';
+import { useTheme } from '../context/ThemeContext';
 
 const CategoriesScreen = ({ navigation }) => {
+  const { colors } = useTheme();
+
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => <CartIcon />,
@@ -13,12 +16,12 @@ const CategoriesScreen = ({ navigation }) => {
   }, [navigation]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+        <TouchableOpacity style={[styles.backBtn, { borderColor: colors.border }]} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>All Categories</Text>
+        <Text style={[styles.title, { color: colors.text }]}>All Categories</Text>
         <View style={{ width: 44 }} />
       </View>
       <FlatList 
@@ -29,14 +32,14 @@ const CategoriesScreen = ({ navigation }) => {
         columnWrapperStyle={styles.columnWrapper}
         renderItem={({ item }) => (
           <TouchableOpacity 
-            style={styles.categoryCard}
+            style={[styles.categoryCard, { backgroundColor: colors.card }]}
             activeOpacity={0.8}
             onPress={() => navigation.navigate('ProductList', { category: item.name })}
           >
-            <View style={styles.iconContainer}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }]}>
               <Image source={{ uri: item.image }} style={styles.image} />
             </View>
-            <Text style={styles.categoryName}>{item.name}</Text>
+            <Text style={[styles.categoryName, { color: colors.text }]}>{item.name}</Text>
           </TouchableOpacity>
         )}
       />
@@ -47,7 +50,6 @@ const CategoriesScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -56,14 +58,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     paddingTop: theme.spacing.xxl + 10,
     paddingBottom: theme.spacing.m,
-    backgroundColor: theme.colors.surface,
   },
   backBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: theme.colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -79,7 +79,6 @@ const styles = StyleSheet.create({
   },
   categoryCard: {
     width: '48%',
-    backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.l,
     padding: theme.spacing.xl,
     alignItems: 'center',
@@ -94,7 +93,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#F3FBF6',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.spacing.m,

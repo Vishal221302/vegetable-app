@@ -3,8 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 
 import { theme } from '../utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
+import Toast from 'react-native-toast-message';
+import { useTheme } from '../context/ThemeContext';
 
 const HelpSupportScreen = ({ navigation }) => {
+  const { isAuthenticated } = useSelector(state => state.auth);
+  const { colors } = useTheme();
   const faqItems = [
     { q: 'How can I track my order?', a: 'You can track your order in the "My Orders" section of your profile.' },
     { q: 'What are the delivery charges?', a: 'Delivery charges vary based on your location and order value.' },
@@ -12,52 +17,66 @@ const HelpSupportScreen = ({ navigation }) => {
     { q: 'How do I return a product?', a: 'If you receive a damaged or incorrect item, contact us via the support button below.' },
   ];
 
+  const handleSupportAction = (screenName) => {
+    if (!isAuthenticated) {
+      Toast.show({
+        type: 'error',
+        text1: '🔒 Login Required',
+        text2: 'Please login first to contact support',
+        visibilityTime: 2500,
+      });
+      navigation.navigate('Login');
+      return;
+    }
+    navigation.navigate(screenName);
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Help & Support</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Help &amp; Support</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.searchSection}>
-          <Text style={styles.searchTitle}>How can we help you?</Text>
-          <View style={styles.searchBar}>
-            <Ionicons name="search-outline" size={20} color="#888" style={styles.searchIcon} />
-            <TextInput style={styles.searchInput} placeholder="Search topics, questions..." />
+        <View style={[styles.searchSection, { backgroundColor: colors.headerBg }]}>
+          <Text style={[styles.searchTitle, { color: colors.text }]}>How can we help you?</Text>
+          <View style={[styles.searchBar, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+            <Ionicons name="search-outline" size={20} color={colors.textLight} style={styles.searchIcon} />
+            <TextInput style={[styles.searchInput, { color: colors.text }]} placeholder="Search topics, questions..." placeholderTextColor={colors.textLight} />
           </View>
         </View>
 
         <View style={styles.supportCards}>
-          <TouchableOpacity style={styles.supportCard}>
+          <TouchableOpacity style={[styles.supportCard, { backgroundColor: colors.card }]} onPress={() => handleSupportAction('Chat')}>
             <View style={[styles.cardIcon, { backgroundColor: '#E1F5FE' }]}>
               <Ionicons name="chatbubbles-outline" size={24} color="#03A9F4" />
             </View>
-            <Text style={styles.cardTitle}>Live Chat</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Live Chat</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.supportCard}>
+          <TouchableOpacity style={[styles.supportCard, { backgroundColor: colors.card }]} onPress={() => handleSupportAction('Chat')}>
             <View style={[styles.cardIcon, { backgroundColor: '#E8F5E9' }]}>
               <Ionicons name="call-outline" size={24} color="#4CAF50" />
             </View>
-            <Text style={styles.cardTitle}>Call Us</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Call Us</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.supportCard}>
+          <TouchableOpacity style={[styles.supportCard, { backgroundColor: colors.card }]} onPress={() => handleSupportAction('EmailSupport')}>
             <View style={[styles.cardIcon, { backgroundColor: '#FFF3E0' }]}>
               <Ionicons name="mail-outline" size={24} color="#FF9800" />
             </View>
-            <Text style={styles.cardTitle}>Email Us</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Email Us</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.faqSection}>
-          <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Frequently Asked Questions</Text>
           {faqItems.map((item, index) => (
-            <View key={index} style={styles.faqItem}>
-              <Text style={styles.faqQuestion}>{item.q}</Text>
-              <Text style={styles.faqAnswer}>{item.a}</Text>
+            <View key={index} style={[styles.faqItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.faqQuestion, { color: colors.text }]}>{item.q}</Text>
+              <Text style={[styles.faqAnswer, { color: colors.textLight }]}>{item.a}</Text>
             </View>
           ))}
         </View>

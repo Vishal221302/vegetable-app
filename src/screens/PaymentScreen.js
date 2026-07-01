@@ -8,6 +8,7 @@ import { clearCart } from '../store/slices/cartSlice';
 import api from '../utils/api';
 import { ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { useTheme } from '../context/ThemeContext';
 
 const PaymentScreen = ({ navigation, route }) => {
   const { shippingAddress } = route.params || {};
@@ -17,6 +18,7 @@ const PaymentScreen = ({ navigation, route }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { colors, isDark } = useTheme();
 
   const [paymentMethods, setPaymentMethods] = useState([
     { id: 'cod', name: 'Cash on Delivery', icon: 'cash-outline' },
@@ -104,205 +106,208 @@ const PaymentScreen = ({ navigation, route }) => {
     const html = `
       <!DOCTYPE html>
       <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          body {
-            background-color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            padding: 20px;
-          }
-          .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border-left-color: #10B981;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-          h3 { color: #1A1A1A; margin: 0 0 10px 0; font-weight: 600; }
-          p { color: #666666; font-size: 14px; margin: 0; text-align: center; }
-        </style>
-      </head>
-      <body>
-        <div class="spinner"></div>
-        <h3>Processing Payment</h3>
-        <p>Please complete your payment on the Razorpay interface.</p>
-        
-        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-        <script>
-          const options = {
-            "key": "${razorpayOrder.keyId}",
-            "amount": "${razorpayOrder.amount}",
-            "currency": "INR",
-            "name": "GreenFresh",
-            "description": "Organic Vegetables Order Payment",
-            "order_id": "${razorpayOrder.id}",
-            "handler": function (response){
-              window.ReactNativeWebView.postMessage(JSON.stringify({
-                status: 'success',
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature
-              }));
-            },
-            "prefill": {
-              "name": "${userName}",
-              "email": "${userEmail}",
-              "contact": "${userPhone}"
-            },
-            "theme": {
-              "color": "#10B981"
-            },
-            "modal": {
-              "ondismiss": function() {
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                  status: 'cancel'
-                }));
-              }
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              background-color: ${isDark ? '#0D0F14' : '#F5F6FA'};
+              color: ${isDark ? '#EAEDF5' : '#1C1C28'};
             }
-          };
-          const rzp1 = new Razorpay(options);
-          rzp1.open();
-        </script>
-      </body>
+            .loading {
+              text-align: center;
+            }
+            .spinner {
+              border: 4px solid rgba(0, 0, 0, 0.1);
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              border-left-color: #01B763;
+              animation: spin 1s linear infinite;
+              margin: 0 auto 15px;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          </style>
+          <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        </head>
+        <body>
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Initializing Secure Payment...</p>
+          </div>
+          <script>
+            var options = {
+              "key": "${razorpayKeyId}",
+              "amount": "${razorpayOrder.amount}",
+              "currency": "${razorpayOrder.currency}",
+              "name": "Organic Vegetables Shop",
+              "description": "Payment for Order",
+              "order_id": "${razorpayOrder.id}",
+              "handler": function (response){
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  status: 'success',
+                  payment_id: response.razorpay_payment_id,
+                  order_id: response.razorpay_order_id,
+                  signature: response.razorpay_signature
+                }));
+              },
+              "prefill": {
+                "name": "${userName}",
+                "email": "${userEmail}",
+                "contact": "${userPhone}"
+              },
+              "theme": {
+                "color": "#01B763"
+              },
+              "modal": {
+                "ondismiss": function(){
+                  window.ReactNativeWebView.postMessage(JSON.stringify({
+                    status: 'cancelled'
+                  }));
+                }
+              }
+            };
+            var rzp1 = new Razorpay(options);
+            rzp1.on('payment.failed', function (response){
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                status: 'failed',
+                error_code: response.error.code,
+                error_description: response.error.description
+              }));
+            });
+            window.onload = function() {
+              rzp1.open();
+            }
+          </script>
+        </body>
       </html>
     `;
     setCheckoutHtml(html);
   };
 
-  const handleNavigationStateChange = async (event) => {
-    // We catch messages using onMessage, but we also can check URL or other triggers if needed
-  };
-
   const handleWebViewMessage = async (event) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      setShowWebView(false);
+    const data = JSON.parse(event.nativeEvent.data);
+    setShowWebView(false);
 
-      if (data.status === 'success') {
-        setLoading(true);
-        try {
-          const response = await api.post(`/orders/${currentOrderId}/verify`, {
-            razorpayPaymentId: data.razorpayPaymentId,
-            razorpaySignature: data.razorpaySignature
-          });
-
-          if (response.data.success) {
-            dispatch(clearCart());
-            navigation.navigate('OrderSuccess');
-          } else {
-            alert('Payment verification failed. Please contact support.');
-          }
-        } catch (err) {
-          console.error('Verify error:', err);
-          alert('Payment verification failed. Please try again.');
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        alert('Payment cancelled or failed');
+    if (data.status === 'success') {
+      setLoading(true);
+      try {
+        await api.put(`/orders/${currentOrderId}/pay`, {
+          id: data.payment_id,
+          status: 'SUCCESS',
+          email_address: user?.email || 'paid@razorpay.com'
+        });
+        dispatch(clearCart());
+        navigation.navigate('OrderSuccess');
+      } catch (err) {
+        alert('Payment verification failed. Please contact support.');
+        navigation.navigate('OrdersTab');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error parsing WebView message:', err);
+    } else if (data.status === 'cancelled') {
+      alert('Payment was cancelled.');
+      navigation.navigate('OrdersTab');
+    } else {
+      alert(data.error_description || 'Payment failed.');
+      navigation.navigate('OrdersTab');
     }
   };
 
-  const renderPaymentMethod = (item) => (
-    <TouchableOpacity 
-      key={item.id}
-      style={[
-        styles.methodCard,
-        selectedMethod === item.id && styles.selectedCard
-      ]}
-      onPress={() => setSelectedMethod(item.id)}
-    >
-      <View style={styles.methodInfo}>
-        <Ionicons 
-          name={item.icon} 
-          size={24} 
-          color={selectedMethod === item.id ? theme.colors.primary : theme.colors.textLight} 
-        />
-        <Text style={[
-          styles.methodName,
-          selectedMethod === item.id && { color: theme.colors.primary }
-        ]}>{item.name}</Text>
-      </View>
-      <Ionicons 
-        name={selectedMethod === item.id ? "radio-button-on" : "radio-button-off"} 
-        size={24} 
-        color={selectedMethod === item.id ? theme.colors.primary : theme.colors.border} 
-      />
-    </TouchableOpacity>
-  );
-
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.summaryContainer}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Summary</Text>
+        
+        <View style={[styles.summaryContainer, { backgroundColor: colors.card }]}>
           <View style={styles.row}>
-            <Text style={styles.label}>Items Total</Text>
-            <Text style={styles.value}>₹{totalAmount}</Text>
+            <Text style={[styles.label, { color: colors.textLight }]}>Subtotal</Text>
+            <Text style={[styles.value, { color: colors.text }]}>₹{totalAmount.toFixed(2)}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Delivery</Text>
-            <Text style={styles.value}>₹40</Text>
+            <Text style={[styles.label, { color: colors.textLight }]}>Shipping Fee</Text>
+            <Text style={[styles.value, { color: colors.text }]}>₹40.00</Text>
           </View>
-          <View style={[styles.row, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total Payable</Text>
-            <Text style={styles.totalValue}>₹{totalAmount + 40}</Text>
+          <View style={[styles.row, styles.totalRow, { borderColor: colors.border }]}>
+            <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
+            <Text style={styles.totalValue}>₹{(totalAmount + 40).toFixed(2)}</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Payment Method</Text>
-        {paymentMethods.map(renderPaymentMethod)}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Payment Method</Text>
 
+        {paymentMethods.map((method) => {
+          const isSelected = selectedMethod === method.id;
+          return (
+            <TouchableOpacity
+              key={method.id}
+              style={[
+                styles.methodCard,
+                { backgroundColor: colors.card, borderColor: colors.border },
+                isSelected && [styles.selectedCard, { borderColor: colors.primary, backgroundColor: colors.primaryLight }]
+              ]}
+              onPress={() => setSelectedMethod(method.id)}
+            >
+              <View style={styles.methodInfo}>
+                <Ionicons 
+                  name={method.icon} 
+                  size={24} 
+                  color={isSelected ? colors.primary : colors.textLight} 
+                />
+                <Text style={[styles.methodName, { color: isSelected ? colors.primary : colors.text }]}>
+                  {method.name}
+                </Text>
+              </View>
+              <Ionicons 
+                name={isSelected ? 'checkmark-circle' : 'ellipse-outline'} 
+                size={20} 
+                color={isSelected ? colors.primary : colors.border} 
+              />
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
-      <View style={styles.footer}>
-        {loading ? (
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        ) : (
-          <Button 
-            title={selectedMethod === 'cod' ? "Place Order (COD)" : "Pay Now with Razorpay"} 
-            onPress={handlePlaceOrder} 
-          />
-        )}
+      <View style={[styles.footer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <Button 
+          title={loading ? "Placing Order..." : (selectedMethod === 'cod' ? "Place COD Order" : "Proceed to Pay")} 
+          onPress={handlePlaceOrder}
+          disabled={loading}
+        />
       </View>
 
-      {/* Razorpay Checkout WebView Modal */}
+      {/* Razorpay Secure Gateway Modal */}
       <Modal
         visible={showWebView}
         animationType="slide"
         onRequestClose={() => {
           setShowWebView(false);
-          alert('Payment cancelled');
+          alert('Payment was cancelled.');
+          navigation.navigate('OrdersTab');
         }}
       >
-        <View style={{ flex: 1 }}>
-          <View style={styles.modalHeader}>
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <View style={[styles.modalHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
             <TouchableOpacity 
               onPress={() => {
                 setShowWebView(false);
-                alert('Payment cancelled');
+                alert('Payment was cancelled.');
+                navigation.navigate('OrdersTab');
               }}
               style={styles.closeButton}
             >
-              <Ionicons name="close" size={28} color="#1A1A1A" />
+              <Ionicons name="close" size={28} color={colors.text} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Secure Checkout</Text>
-            <View style={{ width: 28 }} /> {/* Spacer */}
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Secure Checkout</Text>
+            <View style={{ width: 28 }} />
           </View>
           <WebView
             source={{ html: checkoutHtml }}
@@ -321,7 +326,6 @@ const PaymentScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   content: {
     padding: theme.spacing.xl,
@@ -331,7 +335,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.m,
   },
   summaryContainer: {
-    backgroundColor: theme.colors.surface,
     padding: theme.spacing.l,
     borderRadius: theme.borderRadius.m,
     marginBottom: theme.spacing.xxl,
@@ -343,14 +346,12 @@ const styles = StyleSheet.create({
   },
   label: {
     ...theme.typography.body,
-    color: theme.colors.textLight,
   },
   value: {
     ...theme.typography.body,
   },
   totalRow: {
     borderTopWidth: 1,
-    borderColor: theme.colors.border,
     paddingTop: theme.spacing.m,
     marginTop: theme.spacing.s,
     marginBottom: 0,
@@ -360,22 +361,17 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     ...theme.typography.h2,
-    color: theme.colors.primary,
   },
   methodCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
     padding: theme.spacing.l,
     borderRadius: theme.borderRadius.m,
     borderWidth: 1,
-    borderColor: theme.colors.border,
     marginBottom: theme.spacing.m,
   },
   selectedCard: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryLight,
   },
   methodInfo: {
     flexDirection: 'row',
@@ -387,9 +383,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: theme.spacing.xl,
-    backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
-    borderColor: theme.colors.border,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -398,9 +392,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.l,
     paddingVertical: theme.spacing.m,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    backgroundColor: '#ffffff',
-    paddingTop: theme.spacing.xxl, // Account for notch
+    paddingTop: theme.spacing.xxl,
   },
   closeButton: {
     padding: theme.spacing.xs,
@@ -408,7 +400,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
   }
 });
 

@@ -5,10 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateProfile } from '../store/slices/authSlice';
+import { useTheme } from '../context/ThemeContext';
 
 const EditProfileScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { user, loading } = useSelector(state => state.auth);
+  const { colors } = useTheme();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -31,17 +33,17 @@ const EditProfileScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Profile</Text>
         <TouchableOpacity onPress={handleSave} disabled={loading}>
           {loading ? (
-            <ActivityIndicator size="small" color={theme.colors.primary} />
+            <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <Text style={styles.saveBtnText}>Save</Text>
+            <Text style={[styles.saveBtnText, { color: colors.primary }]}>Save</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -51,9 +53,9 @@ const EditProfileScreen = ({ navigation }) => {
           <View style={styles.imageWrapper}>
             <Image 
               source={{ uri: user?.profileImage || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }} 
-              style={styles.profileImage} 
+              style={[styles.profileImage, { borderColor: colors.border }]} 
             />
-            <TouchableOpacity style={styles.cameraIcon}>
+            <TouchableOpacity style={[styles.cameraIcon, { backgroundColor: colors.primary, borderColor: colors.card }]}>
               <Ionicons name="camera" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
@@ -61,27 +63,29 @@ const EditProfileScreen = ({ navigation }) => {
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="person-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Full Name</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Ionicons name="person-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
               <TextInput 
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 value={name}
                 onChangeText={setName}
                 placeholder="Enter your name"
+                placeholderTextColor={colors.textLight}
               />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Email Address</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Ionicons name="mail-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
               <TextInput 
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 value={email}
                 onChangeText={setEmail}
                 placeholder="Enter your email"
+                placeholderTextColor={colors.textLight}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -89,35 +93,37 @@ const EditProfileScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="call-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Phone Number</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Ionicons name="call-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
               <TextInput 
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="Enter your phone number"
+                placeholderTextColor={colors.textLight}
                 keyboardType="phone-pad"
               />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Location</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="location-outline" size={20} color="#888" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Location</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Ionicons name="location-outline" size={20} color={colors.textLight} style={styles.inputIcon} />
               <TextInput 
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 value={address}
                 onChangeText={setAddress}
                 placeholder="Enter your location"
+                placeholderTextColor={colors.textLight}
               />
             </View>
           </View>
         </View>
 
         <TouchableOpacity 
-          style={[styles.updateBtn, loading && { opacity: 0.7 }]} 
+          style={[styles.updateBtn, { backgroundColor: colors.primary }, loading && { opacity: 0.7 }]} 
           onPress={handleSave}
           disabled={loading}
         >
@@ -135,7 +141,6 @@ const EditProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -150,12 +155,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A1A',
   },
   saveBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: theme.colors.primary,
   },
   content: {
     flex: 1,
@@ -173,20 +176,17 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 4,
-    borderColor: '#F8F9FA',
   },
   cameraIcon: {
     position: 'absolute',
     bottom: 0,
     right: 5,
-    backgroundColor: theme.colors.primary,
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#FFFFFF',
   },
   form: {
     marginTop: 10,
@@ -197,19 +197,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
     marginBottom: 8,
     marginLeft: 5,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
     borderRadius: 15,
     paddingHorizontal: 15,
     height: 55,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
   },
   inputIcon: {
     marginRight: 10,
@@ -217,17 +214,14 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#1A1A1A',
   },
   updateBtn: {
-    backgroundColor: theme.colors.primary,
     height: 60,
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
     marginBottom: 40,
-    shadowColor: theme.colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
     shadowRadius: 10,

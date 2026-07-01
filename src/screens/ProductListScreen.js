@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
-import { theme } from '../utils/theme';
+import { theme, getDiscountedPrice } from '../utils/theme';
 import { products as dummyProducts } from '../utils/dummyData';
 import api from '../utils/api';
 import ProductCard from '../components/ProductCard';
 import { ProductSkeleton } from '../components/SkeletonLoader';
 import { useDispatch } from 'react-redux';
-import { fetchCart, addToCartApi } from '../store/slices/cartSlice';
+import { fetchCart, addToCartApi, addToCartLocal } from '../store/slices/cartSlice';
 import { fetchWishlist, toggleWishlistApi } from '../store/slices/wishlistSlice';
 import Toast from 'react-native-toast-message';
 import { useSelector } from 'react-redux';
 import CartIcon from '../components/CartIcon';
+import { useTheme } from '../context/ThemeContext';
 
 const ProductListScreen = ({ navigation, route }) => {
   const { category } = route.params || {};
@@ -18,6 +19,8 @@ const ProductListScreen = ({ navigation, route }) => {
   const [products, setProducts] = useState([]);
   const dispatch = useDispatch();
   const { items: wishlistItems } = useSelector(state => state.wishlist);
+  const { isAuthenticated } = useSelector(state => state.auth);
+  const { colors } = useTheme();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -48,13 +51,19 @@ const ProductListScreen = ({ navigation, route }) => {
 
   const handleAddToCart = async (product) => {
     try {
-      await dispatch(addToCartApi({ 
-        productId: product._id || product.id, 
+      const productPayload = {
+        productId: product._id || product.id,
         quantity: 1,
-        price: product.price,
+        price: getDiscountedPrice(product.price, product.tag),
         name: product.name,
         image: product.image
-      })).unwrap();
+      };
+      
+      if (isAuthenticated) {
+        await dispatch(addToCartApi(productPayload)).unwrap();
+      } else {
+        dispatch(addToCartLocal(productPayload));
+      }
       
       Toast.show({
         type: 'success',
@@ -73,6 +82,16 @@ const ProductListScreen = ({ navigation, route }) => {
   };
 
   const handleToggleWishlist = (product) => {
+    if (!isAuthenticated) {
+      Toast.show({
+        type: 'error',
+        text1: '🔒 Login Required',
+        text2: 'Please login first to save favourites',
+        visibilityTime: 2500,
+      });
+      navigation.navigate('Login');
+      return;
+    }
     dispatch(toggleWishlistApi(product));
     const isFav = wishlistItems.some(item => (item._id || item.id) === (product._id || product.id));
     Toast.show({
@@ -84,27 +103,35 @@ const ProductListScreen = ({ navigation, route }) => {
     });
   };
 
+  const renderItem = useCallback(({ item }) => (
+    loading ? (
+      <ProductSkeleton />
+    ) : (
+      <ProductCard 
+        item={{...item, id: item._id || item.id, countInStock: item.countInStock}} 
+        onAdd={handleAddToCart}
+        onPress={() => navigation.navigate('ProductDetail', { product: {...item, id: item._id || item.id} })}
+        isFavorite={wishlistItems.some(fav => (fav._id || fav.id) === (item._id || item.id))}
+        onFavoritePress={handleToggleWishlist}
+      />
+    )
+  ), [loading, wishlistItems, handleAddToCart, handleToggleWishlist, navigation]);
+
+  const keyExtractor = useCallback((item, index) => loading ? index.toString() : (item._id || item.id).toString(), [loading]);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList 
         data={loading ? [1, 2, 3, 4, 5, 6] : products}
-        keyExtractor={(item, index) => loading ? index.toString() : (item._id || item.id).toString()}
+        keyExtractor={keyExtractor}
         numColumns={2}
         contentContainerStyle={styles.listContainer}
         columnWrapperStyle={styles.columnWrapper}
-        renderItem={({ item }) => (
-          loading ? (
-            <ProductSkeleton />
-          ) : (
-            <ProductCard 
-              item={{...item, id: item._id || item.id, countInStock: item.countInStock}} 
-              onAdd={handleAddToCart}
-              onPress={() => navigation.navigate('ProductDetail', { product: {...item, id: item._id || item.id} })}
-              isFavorite={wishlistItems.some(fav => (fav._id || fav.id) === (item._id || item.id))}
-              onFavoritePress={handleToggleWishlist}
-            />
-          )
-        )}
+        renderItem={renderItem}
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={true}
       />
     </View>
   );

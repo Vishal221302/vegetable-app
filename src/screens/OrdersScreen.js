@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../utils/api';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
 
 const { height } = Dimensions.get('window');
 
@@ -18,6 +19,7 @@ const OrdersScreen = () => {
   const [isLoading, setIsLoading]         = useState(true);
   const [refreshing, setRefreshing]       = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const { colors, isDark } = useTheme();
 
   // Address edit state
   const [editingAddress, setEditingAddress]   = useState(false);
@@ -167,21 +169,21 @@ const OrdersScreen = () => {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
+            <View style={[styles.modalContainer, { backgroundColor: colors.card }]}>
 
               {/* Modal Header */}
-              <View style={styles.modalHeader}>
+              <View style={[styles.modalHeader, { borderColor: colors.border }]}>
                 <View>
-                  <Text style={styles.modalTitle}>Order Details</Text>
-                  <Text style={styles.modalSubtitle}>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>Order Details</Text>
+                  <Text style={[styles.modalSubtitle, { color: colors.textLight }]}>
                     #{selectedOrder._id.slice(-10).toUpperCase()}
                   </Text>
                 </View>
                 <TouchableOpacity
-                  style={styles.closeBtn}
+                  style={[styles.closeBtn, { backgroundColor: colors.surfaceSecondary }]}
                   onPress={() => { setSelectedOrder(null); setEditingAddress(false); }}
                 >
-                  <Ionicons name="close" size={22} color="#555" />
+                  <Ionicons name="close" size={22} color={colors.icon} />
                 </TouchableOpacity>
               </View>
 
@@ -364,14 +366,14 @@ const OrdersScreen = () => {
 
     return (
       <TouchableOpacity
-        style={styles.orderCard}
+        style={[styles.orderCard, { backgroundColor: colors.card }]}
         onPress={() => { setSelectedOrder(item); setEditingAddress(false); }}
         activeOpacity={0.85}
       >
         <View style={styles.orderHeader}>
           <View style={styles.orderIdGroup}>
-            <Text style={styles.orderId}>#{item._id.slice(-8).toUpperCase()}</Text>
-            <Text style={styles.orderDate}>
+            <Text style={[styles.orderId, { color: colors.text }]}>#{item._id.slice(-8).toUpperCase()}</Text>
+            <Text style={[styles.orderDate, { color: colors.textLight }]}>
               {new Date(item.createdAt).toLocaleDateString('en-IN', {
                 day: 'numeric', month: 'short', year: 'numeric'
               })}
@@ -383,33 +385,33 @@ const OrdersScreen = () => {
           </View>
         </View>
 
-        <View style={styles.hrDivider} />
+        <View style={[styles.hrDivider, { backgroundColor: colors.border }]} />
 
         <View style={styles.orderBody}>
           {firstImage ? (
-            <Image source={{ uri: firstImage }} style={styles.itemImage} />
+            <Image source={{ uri: firstImage }} style={[styles.itemImage, { backgroundColor: colors.surfaceSecondary }]} />
           ) : (
-            <View style={[styles.itemImage, styles.imagePlaceholder]}>
-              <Ionicons name="basket-outline" size={28} color="#CCC" />
+            <View style={[styles.itemImage, styles.imagePlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+              <Ionicons name="basket-outline" size={28} color={colors.textLight} />
             </View>
           )}
           <View style={styles.itemInfo}>
-            <Text style={styles.itemText} numberOfLines={1}>{getItemSummary(item.orderItems)}</Text>
-            <Text style={styles.itemCount}>{item.orderItems.length} item(s)</Text>
-            <Text style={styles.priceText}>₹{Number(item.totalPrice).toFixed(2)}</Text>
+            <Text style={[styles.itemText, { color: colors.text }]} numberOfLines={1}>{getItemSummary(item.orderItems)}</Text>
+            <Text style={[styles.itemCount, { color: colors.textLight }]}>{item.orderItems.length} item(s)</Text>
+            <Text style={[styles.priceText, { color: colors.text }]}>₹{Number(item.totalPrice).toFixed(2)}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#CCC" />
+          <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
         </View>
 
         <View style={styles.orderFooter}>
-          <View style={styles.methodBadge}>
-            <Ionicons name="card-outline" size={13} color="#888" />
-            <Text style={styles.methodText}>{item.paymentMethod}</Text>
+          <View style={[styles.methodBadge, { backgroundColor: colors.surfaceSecondary }]}>
+            <Ionicons name="card-outline" size={13} color={colors.textLight} />
+            <Text style={[styles.methodText, { color: colors.textLight }]}>{item.paymentMethod}</Text>
           </View>
           {item.status === 'Preparing' && (
-            <View style={styles.editHintBadge}>
-              <Ionicons name="pencil-outline" size={11} color="#4F46E5" />
-              <Text style={styles.editHintText}>Address editable</Text>
+            <View style={[styles.editHintBadge, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="pencil-outline" size={11} color={colors.primary} />
+              <Text style={[styles.editHintText, { color: colors.primary }]}>Address editable</Text>
             </View>
           )}
         </View>
@@ -418,25 +420,25 @@ const OrdersScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Orders</Text>
-        <TouchableOpacity onPress={onRefresh} style={styles.refreshBtn}>
-          <Ionicons name="refresh-outline" size={22} color={theme.colors.primary} />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>My Orders</Text>
+        <TouchableOpacity onPress={onRefresh} style={[styles.refreshBtn, { backgroundColor: colors.primaryLight }]}>
+          <Ionicons name="refresh-outline" size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.tabContainer}>
+      <View style={[styles.tabContainer, { backgroundColor: colors.headerBg }]}>
         {[
           { key: 'Active', count: activeOrders.length },
           { key: 'Completed', count: completedOrders.length }
         ].map(tab => (
           <TouchableOpacity
             key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.activeTab]}
+            style={[styles.tab, { backgroundColor: colors.surfaceSecondary }, activeTab === tab.key && styles.activeTab]}
             onPress={() => setActiveTab(tab.key)}
           >
-            <Text style={[styles.tabText, activeTab === tab.key && styles.activeTabText]}>
+            <Text style={[styles.tabText, { color: colors.textLight }, activeTab === tab.key && styles.activeTabText]}>
               {tab.key} ({tab.count})
             </Text>
           </TouchableOpacity>
@@ -445,8 +447,8 @@ const OrdersScreen = () => {
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading your orders...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textLight }]}>Loading your orders...</Text>
         </View>
       ) : (
         <FlatList
@@ -459,15 +461,15 @@ const OrdersScreen = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={[theme.colors.primary]}
-              tintColor={theme.colors.primary}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="receipt-outline" size={80} color="#DDD" />
-              <Text style={styles.emptyText}>No {activeTab.toLowerCase()} orders</Text>
-              <Text style={styles.emptySubText}>
+              <Ionicons name="receipt-outline" size={80} color={colors.border} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No {activeTab.toLowerCase()} orders</Text>
+              <Text style={[styles.emptySubText, { color: colors.textLight }]}>
                 {activeTab === 'Active'
                   ? 'Place an order to see it here'
                   : 'Your completed orders will appear here'}
@@ -483,11 +485,11 @@ const OrdersScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container:        { flex: 1, backgroundColor: '#F8F9FA' },
-  header:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: '#FFFFFF' },
-  headerTitle:      { fontSize: 22, fontWeight: '800', color: '#1A1A1A' },
-  refreshBtn:       { padding: 6, borderRadius: 10, backgroundColor: '#F0FDF4' },
-  tabContainer:     { flexDirection: 'row', backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingBottom: 15, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, gap: 10 },
+  container:        { flex: 1 },
+  header:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 15, borderBottomWidth: 1 },
+  headerTitle:      { fontSize: 22, fontWeight: '800' },
+  refreshBtn:       { padding: 6, borderRadius: 10 },
+  tabContainer:     { flexDirection: 'row', paddingHorizontal: 20, paddingBottom: 15, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, gap: 10 },
   tab:              { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 15, backgroundColor: '#F5F5F5' },
   activeTab:        { backgroundColor: theme.colors.primary },
   tabText:          { fontSize: 13, fontWeight: '700', color: '#888' },
@@ -521,12 +523,12 @@ const styles = StyleSheet.create({
   emptySubText:     { fontSize: 13, color: '#AAA', textAlign: 'center', paddingHorizontal: 40 },
 
   /* Modal */
-  modalOverlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
-  modalContainer:     { backgroundColor: '#FFFFFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: height * 0.93 },
-  modalHeader:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 24, paddingTop: 22, paddingBottom: 16, borderBottomWidth: 1, borderColor: '#F0F0F0' },
-  modalTitle:         { fontSize: 20, fontWeight: '800', color: '#1A1A1A' },
-  modalSubtitle:      { fontSize: 12, color: '#AAA', fontFamily: 'monospace', marginTop: 3 },
-  closeBtn:           { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F5F5F5', justifyContent: 'center', alignItems: 'center' },
+  modalOverlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+  modalContainer:     { borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: height * 0.93 },
+  modalHeader:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 24, paddingTop: 22, paddingBottom: 16, borderBottomWidth: 1 },
+  modalTitle:         { fontSize: 20, fontWeight: '800' },
+  modalSubtitle:      { fontSize: 12, fontFamily: 'monospace', marginTop: 3 },
+  closeBtn:           { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
   modalScroll:        { paddingHorizontal: 22 },
 
   statusFullBadge:    { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 16, marginTop: 18, gap: 8 },

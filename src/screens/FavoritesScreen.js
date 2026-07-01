@@ -2,16 +2,17 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { theme } from '../utils/theme';
 import ProductCard from '../components/ProductCard';
-import { products } from '../utils/dummyData';
 import { fetchCart, addToCartApi } from '../store/slices/cartSlice';
 import { fetchWishlist, toggleWishlistApi } from '../store/slices/wishlistSlice';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTheme } from '../context/ThemeContext';
 
 const FavoritesScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { items: favoriteItems } = useSelector(state => state.wishlist);
+  const { colors } = useTheme();
 
   useEffect(() => {
     dispatch(fetchWishlist());
@@ -47,17 +48,19 @@ const FavoritesScreen = ({ navigation }) => {
 
   if (favoriteItems.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="heart-outline" size={80} color={theme.colors.border} />
-        <Text style={styles.emptyText}>No Favorites Yet</Text>
+      <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+        <Ionicons name="heart-outline" size={80} color={colors.border} />
+        <Text style={[styles.emptyText, { color: colors.textLight }]}>No Favorites Yet</Text>
+        <Text style={[styles.emptySubtext, { color: colors.textLight }]}>Add items you love to your wishlist</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Wishlist</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.primary }]}>My Wishlist</Text>
+        <Text style={[styles.count, { color: colors.textLight }]}>{favoriteItems.length} items</Text>
       </View>
       <FlatList
         data={favoriteItems}
@@ -84,33 +87,42 @@ const FavoritesScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   header: {
     paddingHorizontal: theme.spacing.xl,
     paddingTop: theme.spacing.xxl + 10,
     paddingBottom: theme.spacing.m,
-    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
   },
   title: {
     ...theme.typography.h1,
-    color: theme.colors.primary,
+  },
+  count: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.spacing.xl,
-    backgroundColor: theme.colors.background,
   },
   emptyText: {
     ...theme.typography.h2,
-    color: theme.colors.textLight,
     marginTop: theme.spacing.l,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
   listContainer: {
     padding: theme.spacing.m,
-    paddingBottom: 100, // For bottom tab
+    paddingBottom: 100,
   },
   columnWrapper: {
     justifyContent: 'space-between',

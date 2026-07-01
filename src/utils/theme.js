@@ -40,3 +40,17 @@ export const theme = {
     small: { fontSize: 10, color: '#8F92A1' },
   }
 };
+
+export const getDiscountedPrice = (price, tag) => {
+  if (price === undefined || price === null) return 0;
+  if (tag && typeof tag === 'string') {
+    const match = tag.match(/(\d+)\s*%/);
+    if (match) {
+      const percentage = parseInt(match[1], 10);
+      if (!isNaN(percentage) && percentage > 0 && percentage <= 100) {
+        return price * (1 - percentage / 100);
+      }
+    }
+  }
+  return price;
+};

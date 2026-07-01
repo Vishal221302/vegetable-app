@@ -1,15 +1,17 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { theme } from '../utils/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const Button = ({ title, onPress, type = 'primary', loading = false, style, textStyle, disabled }) => {
   const isPrimary = type === 'primary';
+  const { colors } = useTheme();
   
   return (
     <TouchableOpacity 
       style={[
         styles.button, 
-        isPrimary ? styles.primary : styles.outline,
+        isPrimary ? [styles.primary, { backgroundColor: colors.primary }] : [styles.outline, { borderColor: colors.primary }],
         disabled && styles.disabled,
         style
       ]} 
@@ -18,11 +20,11 @@ const Button = ({ title, onPress, type = 'primary', loading = false, style, text
       activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator color={isPrimary ? theme.colors.surface : theme.colors.primary} />
+        <ActivityIndicator color={isPrimary ? '#FFFFFF' : colors.primary} />
       ) : (
         <Text style={[
           styles.text, 
-          isPrimary ? styles.textPrimary : styles.textOutline,
+          isPrimary ? styles.textPrimary : [styles.textOutline, { color: colors.primary }],
           textStyle
         ]}>
           {title}
@@ -41,12 +43,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   primary: {
-    backgroundColor: theme.colors.primary,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: theme.colors.primary,
   },
   disabled: {
     opacity: 0.6,
@@ -55,10 +55,9 @@ const styles = StyleSheet.create({
     ...theme.typography.h3,
   },
   textPrimary: {
-    color: theme.colors.surface,
+    color: '#FFFFFF',
   },
   textOutline: {
-    color: theme.colors.primary,
   }
 });
 

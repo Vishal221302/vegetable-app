@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, TextInput, ScrollView, Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart, updateQuantityApi, removeFromCartApi } from '../store/slices/cartSlice';
 import { useEffect } from 'react';
 import { theme } from '../utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../context/ThemeContext';
 
 const CartScreen = ({ navigation }) => {
   const { items, totalAmount } = useSelector(state => state.cart);
+  const { isAuthenticated } = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const [promoCode, setPromoCode] = useState('');
+  const { colors, isDark } = useTheme();
 
   useEffect(() => {
     dispatch(fetchCart());
@@ -25,37 +28,42 @@ const CartScreen = ({ navigation }) => {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.cartItem}>
-      <Image source={{ uri: item.image }} style={styles.itemImage} />
+    <View style={[styles.cartItem, { backgroundColor: colors.card }]}>
+      <Image source={{ uri: item.image }} style={[styles.itemImage, { backgroundColor: colors.surfaceSecondary }]} />
       <View style={styles.itemInfo}>
         <View style={styles.itemHeader}>
           <View>
-            <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemSubtitle}>Fresh {item.name}</Text>
+            <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
+            <Text style={[styles.itemSubtitle, { color: colors.textLight }]}>Fresh {item.name}</Text>
           </View>
           <TouchableOpacity 
             onPress={() => dispatch(removeFromCartApi(item.id))}
             style={styles.deleteBtn}
           >
-            <Ionicons name="trash-outline" size={20} color="#888" />
+            <Ionicons name="trash-outline" size={20} color={colors.textLight} />
           </TouchableOpacity>
         </View>
         
         <View style={styles.itemFooter}>
-          <Text style={styles.itemPrice}>₹{item.price}</Text>
-          <View style={styles.qtyContainer}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[styles.itemPrice, { color: colors.text }]}>₹{item.price.toFixed(2)}</Text>
+            {item.originalPrice && item.originalPrice !== item.price ? (
+              <Text style={styles.itemOriginalPrice}> ₹{item.originalPrice.toFixed(2)}</Text>
+            ) : null}
+          </View>
+          <View style={[styles.qtyContainer, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
             <TouchableOpacity 
               style={styles.qtyBtn}
               onPress={() => handleUpdateQuantity(item.id, item.quantity - 1)}
             >
-              <Ionicons name="remove" size={16} color="#333" />
+              <Ionicons name="remove" size={16} color={colors.icon} />
             </TouchableOpacity>
-            <Text style={styles.qtyText}>{item.quantity}</Text>
+            <Text style={[styles.qtyText, { color: colors.text }]}>{item.quantity}</Text>
             <TouchableOpacity 
               style={styles.qtyBtn}
               onPress={() => handleUpdateQuantity(item.id, item.quantity + 1)}
             >
-              <Ionicons name="add" size={16} color="#333" />
+              <Ionicons name="add" size={16} color={colors.icon} />
             </TouchableOpacity>
           </View>
         </View>
@@ -77,15 +85,15 @@ const CartScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <TouchableOpacity 
-          style={styles.backBtn}
+          style={[styles.backBtn, { backgroundColor: colors.card }]}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="chevron-back" size={24} color="#333" />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Your Cart</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Your Cart</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -105,16 +113,17 @@ const CartScreen = ({ navigation }) => {
             </View>
           </ScrollView>
 
-          <View style={styles.fixedFooter}>
+          <View style={[styles.fixedFooter, { backgroundColor: colors.card }]}>
             <View style={styles.promoSection}>
-              <View style={styles.promoInputContainer}>
+              <View style={[styles.promoInputContainer, { backgroundColor: colors.surfaceSecondary }]}>
                 <TextInput 
-                  style={styles.promoInput}
+                  style={[styles.promoInput, { color: colors.text }]}
                   placeholder="Enter Promo Code"
+                  placeholderTextColor={colors.textLight}
                   value={promoCode}
                   onChangeText={setPromoCode}
                 />
-                <TouchableOpacity style={styles.applyBtn}>
+                <TouchableOpacity style={[styles.applyBtn, { backgroundColor: isDark ? colors.surface : '#0B151F' }]}>
                   <Text style={styles.applyBtnText}>Apply Code</Text>
                 </TouchableOpacity>
               </View>
@@ -122,23 +131,36 @@ const CartScreen = ({ navigation }) => {
 
             <View style={styles.summarySection}>
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Subtotal</Text>
-                <Text style={styles.summaryValue}>₹{totalAmount.toFixed(2)}</Text>
+                <Text style={[styles.summaryLabel, { color: colors.textLight }]}>Subtotal</Text>
+                <Text style={[styles.summaryValue, { color: colors.text }]}>₹{totalAmount.toFixed(2)}</Text>
               </View>
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Shipping Fee</Text>
-                <Text style={styles.summaryValue}>₹30.00</Text>
+                <Text style={[styles.summaryLabel, { color: colors.textLight }]}>Shipping Fee</Text>
+                <Text style={[styles.summaryValue, { color: colors.text }]}>₹30.00</Text>
               </View>
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
               <View style={[styles.summaryRow, { marginTop: 10 }]}>
-                <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>₹{(totalAmount + 30).toFixed(2)}</Text>
+                <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
+                <Text style={[styles.totalValue, { color: colors.text }]}>₹{(totalAmount + 30).toFixed(2)}</Text>
               </View>
             </View>
 
             <TouchableOpacity 
               style={styles.checkoutBtn}
-              onPress={() => navigation.navigate('Address', { mode: 'checkout' })}
+              onPress={() => {
+                if (!isAuthenticated) {
+                  Alert.alert(
+                    '🔒 Login Required',
+                    'Please login first to proceed to checkout.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Login', onPress: () => navigation.navigate('Login') }
+                    ]
+                  );
+                  return;
+                }
+                navigation.navigate('Address', { mode: 'checkout' });
+              }}
             >
               <Text style={styles.checkoutBtnText}>Proceed To Checkout</Text>
             </TouchableOpacity>
@@ -152,7 +174,6 @@ const CartScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -240,6 +261,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#1A1A1A',
+  },
+  itemOriginalPrice: {
+    fontSize: 12,
+    color: '#8F92A1',
+    textDecorationLine: 'line-through',
   },
   qtyContainer: {
     flexDirection: 'row',

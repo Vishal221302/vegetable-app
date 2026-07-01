@@ -1,85 +1,113 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
-import { theme } from '../utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../context/ThemeContext';
 
 const SettingsScreen = ({ navigation }) => {
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDark, colors, toggleTheme } = useTheme();
 
-  const SettingItem = ({ title, icon, value, onToggle, isSwitch }) => (
-    <View style={styles.settingItem}>
+  const SettingItem = ({ title, subtitle, icon, iconColor, value, onToggle, isSwitch, onPress }) => (
+    <TouchableOpacity
+      activeOpacity={onPress || isSwitch ? 0.7 : 1}
+      onPress={onPress}
+      style={[styles.settingItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+    >
       <View style={styles.settingLeft}>
-        <View style={styles.iconContainer}>
-          <Ionicons name={icon} size={22} color={theme.colors.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: (iconColor || colors.primary) + '18' }]}>
+          <Ionicons name={icon} size={20} color={iconColor || colors.primary} />
         </View>
-        <Text style={styles.settingTitle}>{title}</Text>
+        <View>
+          <Text style={[styles.settingTitle, { color: colors.text }]}>{title}</Text>
+          {subtitle ? <Text style={[styles.settingSubtitle, { color: colors.textLight }]}>{subtitle}</Text> : null}
+        </View>
       </View>
       {isSwitch ? (
-        <Switch 
-          value={value} 
+        <Switch
+          value={value}
           onValueChange={onToggle}
-          trackColor={{ false: '#DDD', true: theme.colors.primary + '80' }}
-          thumbColor={value ? theme.colors.primary : '#F4F3F4'}
+          trackColor={{ false: colors.border, true: colors.primary + '90' }}
+          thumbColor={value ? colors.primary : colors.textLight}
+          ios_backgroundColor={colors.border}
         />
       ) : (
-        <Ionicons name="chevron-forward" size={20} color="#CCC" />
+        <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
       )}
-    </View>
+    </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.contentPadding}>
+
+        {/* Appearance */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <SettingItem 
-            title="Push Notifications" 
-            icon="notifications-outline" 
-            value={pushNotifications} 
-            onToggle={setPushNotifications}
+          <Text style={[styles.sectionTitle, { color: colors.textLight }]}>Appearance</Text>
+          <SettingItem
+            title="Dark Mode"
+            subtitle={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            icon={isDark ? 'sunny-outline' : 'moon-outline'}
+            iconColor={isDark ? '#F5A623' : '#6C5CE7'}
+            value={isDark}
+            onToggle={toggleTheme}
             isSwitch={true}
           />
-          <SettingItem 
-            title="Email Notifications" 
-            icon="mail-outline" 
-            value={emailNotifications} 
-            onToggle={setEmailNotifications}
-            isSwitch={true}
+          <SettingItem
+            title="Language"
+            subtitle="English"
+            icon="globe-outline"
+            iconColor="#00B4D8"
           />
         </View>
 
+        {/* Account & Security */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Appearance</Text>
-          <SettingItem 
-            title="Dark Mode" 
-            icon="moon-outline" 
-            value={darkMode} 
-            onToggle={setDarkMode}
-            isSwitch={true}
+          <Text style={[styles.sectionTitle, { color: colors.textLight }]}>Account &amp; Security</Text>
+          <SettingItem
+            title="Change Password"
+            icon="lock-closed-outline"
+            iconColor="#FF6B6B"
           />
-          <SettingItem title="Language" icon="globe-outline" />
+          <SettingItem
+            title="Privacy Settings"
+            icon="shield-checkmark-outline"
+            iconColor="#4ECDC4"
+          />
+          <SettingItem
+            title="Two-Factor Auth"
+            icon="key-outline"
+            iconColor="#FFD93D"
+          />
         </View>
 
+        {/* About */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account & Security</Text>
-          <SettingItem title="Change Password" icon="lock-closed-outline" />
-          <SettingItem title="Privacy Settings" icon="shield-checkmark-outline" />
-          <SettingItem title="Two-Factor Auth" icon="key-outline" />
+          <Text style={[styles.sectionTitle, { color: colors.textLight }]}>About</Text>
+          <SettingItem
+            title="App Version"
+            subtitle="1.0.0"
+            icon="information-circle-outline"
+            iconColor="#A8DADC"
+          />
+          <SettingItem
+            title="Terms of Service"
+            icon="document-text-outline"
+            iconColor="#B5838D"
+          />
         </View>
 
-        <TouchableOpacity style={styles.deleteBtn}>
-          <Text style={styles.deleteBtnText}>Delete Account</Text>
+        <TouchableOpacity style={[styles.deleteBtn, { borderColor: colors.error + '40', backgroundColor: colors.error + '10' }]}>
+          <Ionicons name="trash-outline" size={18} color={colors.error} style={{ marginRight: 8 }} />
+          <Text style={[styles.deleteBtnText, { color: colors.error }]}>Delete Account</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -89,7 +117,6 @@ const SettingsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -97,7 +124,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
   },
   backBtn: {
     padding: 5,
@@ -105,60 +132,68 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A1A',
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
   },
+  contentPadding: {
+    paddingBottom: 40,
+  },
   section: {
-    marginTop: 25,
+    marginTop: 28,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#888',
-    marginBottom: 15,
-    marginLeft: 5,
+    marginBottom: 12,
+    marginLeft: 4,
     textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
     padding: 15,
-    borderRadius: 20,
-    marginBottom: 12,
+    borderRadius: 16,
+    marginBottom: 10,
+    borderWidth: 1,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: theme.colors.primary + '10',
+    width: 42,
+    height: 42,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 14,
   },
   settingTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+  },
+  settingSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
   },
   deleteBtn: {
-    marginTop: 40,
-    marginBottom: 40,
+    marginTop: 36,
+    marginBottom: 20,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1,
   },
   deleteBtnText: {
-    color: theme.colors.error,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-  }
+  },
 });
 
 export default SettingsScreen;
